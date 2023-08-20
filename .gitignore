@@ -15,6 +15,7 @@ build/
 out/
 !**/src/main/**/out/
 !**/src/test/**/out/
+.idea/*
 
 ### Eclipse ###
 .apt_generated
@@ -41,9 +42,7 @@ bin/
 ### Mac OS ###
 .DS_Store
 
-.idea/*
-
 ### Rust ###
-src/main/rust/Cargo.lock
-src/main/rust/.cargo/*
-src/main/rust/target/*
+Cargo.lock
+.cargo/*
+target/*
