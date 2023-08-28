@@ -1,6 +1,4 @@
 use codemp::prelude::CodempError;
-use jni::JNIEnv;
-use crate::JAVA_FOLDER;
 
 pub struct ErrorWrapper(CodempError);
 
@@ -11,24 +9,19 @@ impl From::<CodempError> for ErrorWrapper {
 }
 
 impl ErrorWrapper {
-    pub fn throw(&self, mut env: JNIEnv) {
-        let exception_package: String = format!("{}/exceptions", JAVA_FOLDER);
-        let res = match &self.0 {
-            CodempError::Transport { status, message } => env.throw_new(format!("{}/TransportException", exception_package), format!("Error {}: {}", status, message)),
-            CodempError::InvalidState { msg } => env.throw_new(format!("{}/InvalidStateException", exception_package), msg),
-            CodempError::Filler { message } => env.throw_new(format!("{}/CodeMPException", exception_package), message),
+    pub fn get_error_message(&self) ->  String {
+        match &self.0 {
+            CodempError::Transport { status, message } =>
+                format!("Error {}: {}", status, message),
+            CodempError::InvalidState { msg } => msg.to_string(),
+            CodempError::Filler { message } => message.to_string(),
             CodempError::Channel { send } => {
-                let class_name:String = if *send {
-                    format!("{}/ChannelException/Send", exception_package)
+                if *send {
+                    "Error while sending message on channel: the channel was closed!".to_string()
                 } else {
-                    format!("{}/ChannelException/Read", exception_package)
-                };
-                env.throw_new(class_name, "The requested channel was closed!")
+                    "Error while reading message from channel: the channel was closed!".to_string()
+                }
             }
-        };
-
-        if let Err(e) = res {
-            panic!("An error occurred while converting a Rust error to a Java Exception: {}", e);
         }
     }
 }

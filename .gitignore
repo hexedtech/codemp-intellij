@@ -44,8 +44,8 @@ bin/
 
 ### Rust ###
 Cargo.lock
-.cargo/*
-target/*
+.cargo
+target
 
 # Do not inclue generated code
 src/main/java/com/codemp/intellij/jni

@@ -1,79 +1,75 @@
 mod error;
 
-use std::ffi::c_char;
 use std::sync::Arc;
 use codemp::prelude::*;
 use rifgen::rifgen_attr::generate_interface;
 use crate::error::ErrorWrapper;
-
-pub const JAVA_PACKAGE: &str = "com.codemp.intellij";
-pub const JAVA_FOLDER: &str = "com/codemp/intellij";
 
 // #[generate_interface_doc] //TODO
 struct CodeMPHandler {}
 
 impl CodeMPHandler {
 	#[generate_interface(constructor)]
-	fn new() -> CodeMPHandler {
+	async fn new() -> CodeMPHandler {
 		CodeMPHandler {}
 	}
 
 	#[generate_interface]
-	async fn connect(addr: String) {
-		CODEMP_INSTANCE.connect(&addr).await;
-		/*match CODEMP_INSTANCE.connect(&addr) {
-			Ok(()) => (),
-			Err(err) => ErrorWrapper(err) //.throw(env)
-		}*/
+	async fn connect(addr: String) -> Result<(), String> {
+		convert(CODEMP_INSTANCE.connect(&addr).await)
 	}
 
 	#[generate_interface]
-	async fn join(session: String) -> CursorHandler {
-		let controller = CODEMP_INSTANCE.join(&session).await.unwrap();
-		CursorHandler { cursor: Some(controller) } //TODO error handling
-		/*match CODEMP_INSTANCE.join(&session) {
-			Ok(cursor) => CursorHandler { cursor },
-			//Err(err) => ErrorWrapper(err)
-		}*/
+	async fn join(session: String) -> Result<CursorHandler, String> {
+		convert_cursor(CODEMP_INSTANCE.join(&session).await)
 	}
 
 	#[generate_interface]
-	async fn create(path: String) {
-		CODEMP_INSTANCE.create(&path, None).await;
+	async fn create(path: String) -> Result<(), String> {
+		convert(CODEMP_INSTANCE.create(&path, None).await)
 	}
 
 	#[generate_interface]
-	async fn create_with_content(path: String, content: String) {
-		CODEMP_INSTANCE.create(&path, Some(&content)).await;
+	async fn create_with_content(path: String, content: String) -> Result<(), String> {
+		convert(CODEMP_INSTANCE.create(&path, Some(&content)).await)
 	}
 
 	#[generate_interface]
-	async fn attach(path: String) -> BufferHandler {
-		let controller = CODEMP_INSTANCE.attach(&path).await.unwrap();
-		BufferHandler { buffer: Some(controller) }
+	async fn attach(path: String) -> Result<BufferHandler, String> {
+		convert_buffer(CODEMP_INSTANCE.attach(&path).await)
 	}
 
 	#[generate_interface]
-	async fn get_cursor() -> CursorHandler {
-		let controller = CODEMP_INSTANCE.get_cursor().await.unwrap();
-		CursorHandler { cursor: Some(controller) }
+	async fn get_cursor() -> Result<CursorHandler, String> {
+		convert_cursor(CODEMP_INSTANCE.get_cursor().await)
 	}
 
 	#[generate_interface]
-	async fn get_buffer(path: String) -> BufferHandler {
-		let controller = CODEMP_INSTANCE.get_buffer(&path).await.unwrap();
-		BufferHandler { buffer: Some(controller) }
+	async fn get_buffer(path: String) -> Result<BufferHandler, String> {
+		convert_buffer(CODEMP_INSTANCE.get_buffer(&path).await)
 	}
 
 	#[generate_interface]
-	async fn leave_workspace() {
-		CODEMP_INSTANCE.leave_workspace().await.unwrap()
+	async fn leave_workspace() -> Result<(), String> {
+		convert(CODEMP_INSTANCE.leave_workspace().await)
 	}
 
 	#[generate_interface]
-	async fn disconnect_buffer(path: String) -> bool {
-		CODEMP_INSTANCE.disconnect_buffer(&path).await.unwrap()
+	async fn disconnect_buffer(path: String) -> Result<bool, String> {
+		convert(CODEMP_INSTANCE.disconnect_buffer(&path).await)
 	}
+}
+
+fn convert_buffer(result: Result<Arc<CodempBufferController>, CodempError>) -> Result<BufferHandler, String> {
+	convert(result).map(|val| BufferHandler { buffer: Some(val) })
+}
+
+fn convert_cursor(result: Result<Arc<CodempCursorController>, CodempError>) -> Result<CursorHandler, String> {
+	convert(result).map(|val| CursorHandler { cursor: Some(val) })
+}
+
+fn convert<T>(result: Result<T, CodempError>) -> Result<T, String> {
+	result.map_err(|err| ErrorWrapper::from(err).get_error_message())
 }
 
 struct CursorHandler {
@@ -82,7 +78,7 @@ struct CursorHandler {
 
 impl CursorHandler {
 	#[generate_interface(constructor)]
-	fn new() -> CursorHandler { //TODO this sucks but whatever
+	async fn new() -> CursorHandler { //TODO: this sucks but whatever
 		CursorHandler { cursor: None }
 	}
 }
@@ -94,7 +90,7 @@ struct BufferHandler {
 
 impl BufferHandler {
 	#[generate_interface(constructor)]
-	fn new() -> BufferHandler { //TODO this sucks but whatever
+	async fn new() -> BufferHandler { //TODO: this sucks but whatever
 		BufferHandler { buffer: None }
 	}
 }

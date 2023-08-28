@@ -4,13 +4,18 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-codemp = { git = "ssh://git@github.com-irl/codewithotherpeopleandchangenamelater/codemp.git", tag = "v0.4.2" }
-jni = "0.21.1"
-rifgen = "0.1.61"
+codemp = { git = "ssh://git@github.com-irl/codewithotherpeopleandchangenamelater/codemp.git", tag = "v0.4.4", features = ["global"] }
+jni = { version = "0.21.1", features = ["invocation"] }
+rifgen = { path = "/home/zaaarf/dev/irl/rust/jni/rifgen" }
+#rifgen = { git = "https://github.com/Kofituo/rifgen.git", rev = "d27d9785b2febcf5527f1deb6a846be5d583f7d7"}
+#rifgen = "0.1.7"
 
 [build-dependencies]
 flapigen = "0.6.0"
-rifgen = "0.1.61"
+rifgen = { path = "/home/zaaarf/dev/irl/rust/jni/rifgen" }
+#rifgen = "0.1.7"
+#rifgen = { git = "https://github.com/Kofituo/rifgen.git", rev = "d27d9785b2febcf5527f1deb6a846be5d583f7d7"}
+
 
 [lib]
 crate_type = ["cdylib"]
