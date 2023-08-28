@@ -12,15 +12,21 @@ fn main() {
     Generator::new(TypeCases::CamelCase,Language::Java,source_folder)
         .generate_interface(&glue_file);
 
+    let jni_path = Path::new("src")
+        .join("main")
+        .join("java")
+        .join("com")
+        .join("codemp")
+        .join("intellij")
+        .join("jni");
+
+    //create folder if it doesn't exist
+    std::fs::create_dir_all(&jni_path)
+        .expect("An error occurred while creating the JNI folder!");
+
     let java_gen = flapigen::Generator::new(LanguageConfig::JavaConfig(
         JavaConfig::new(
-            Path::new("src")
-                .join("main")
-                .join("java")
-                .join("com")
-                .join("codemp")
-                .join("intellij")
-                .join("jni"),
+            jni_path,
             "com.codemp.intellij.jni".into()
         ))).rustfmt_bindings(true);
 
