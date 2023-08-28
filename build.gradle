@@ -41,12 +41,20 @@ tasks {
 }
 
 //define rust tasks
+def jniSourcesFolder = 'src/main/java/com/codemp/intellij/jni'
+
 tasks.register('cargoBuild', Exec) {
 	workingDir '.'
 	commandLine 'cargo', 'build'
 }
 
 compileJava.dependsOn cargoBuild
+
+tasks.register('prepareJniFolder') {
+	mkdir jniSourcesFolder
+}
+
+cargoBuild.dependsOn prepareJniFolder
 
 tasks.register('cargoClean', Exec) {
 	workingDir '.'
@@ -55,3 +63,8 @@ tasks.register('cargoClean', Exec) {
 
 clean.dependsOn cargoClean
 
+tasks.register('deleteGeneratedNativeInterface', Delete) {
+	delete jniSourcesFolder
+}
+
+cargoClean.dependsOn deleteGeneratedNativeInterface
