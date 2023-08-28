@@ -3,13 +3,14 @@ use std::{env, path::Path};
 use rifgen::{Generator, TypeCases, Language};
 
 fn main() {
-    let out_dir = Path::new(&env::var("OUT_DIR")
-        .expect("no OUT_DIR, but cargo should provide it"));
+    let out_dir_var = env::var("OUT_DIR")
+        .expect("no OUT_DIR, but cargo should provide it");
+    let out_dir = Path::new(&out_dir_var);
     let source_folder = "src/main/rust/";
 
     let glue_file = out_dir.join("glue.in");
     Generator::new(TypeCases::CamelCase,Language::Java,source_folder)
-        .generate_interface(glue_file.to_str());
+        .generate_interface(&glue_file);
 
     let java_gen = flapigen::Generator::new(LanguageConfig::JavaConfig(
         JavaConfig::new(
@@ -18,18 +19,19 @@ fn main() {
                 .join("java")
                 .join("com")
                 .join("codemp")
-                .join("intellij"),
-            "com.codemp.intellij".into()
+                .join("intellij")
+                .join("jni"),
+            "com.codemp.intellij.jni".into()
         ))).rustfmt_bindings(true);
 
     java_gen.expand(
         "codemp-intellij",
-        glue_file,
+        &glue_file,
         out_dir.join("glue.rs"),
     );
 
     println!(
         "cargo:rerun-if-changed={}",
-        Path::new("src/main").join(glue_file).display()
+        Path::new("src/main").join(&glue_file).display()
     );
 }

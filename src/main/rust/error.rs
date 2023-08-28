@@ -11,7 +11,7 @@ impl From::<CodempError> for ErrorWrapper {
 }
 
 impl ErrorWrapper {
-    pub(crate) fn throw(&self, mut env: JNIEnv) {
+    pub fn throw(&self, mut env: JNIEnv) {
         let exception_package: String = format!("{}/exceptions", JAVA_FOLDER);
         let res = match &self.0 {
             CodempError::Transport { status, message } => env.throw_new(format!("{}/TransportException", exception_package), format!("Error {}: {}", status, message)),

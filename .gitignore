@@ -46,3 +46,6 @@ bin/
 Cargo.lock
 .cargo/*
 target/*
+
+# Do not inclue generated code
+src/main/java/com/codemp/intellij/jni
