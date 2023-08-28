@@ -1,46 +1,83 @@
-use jni::JNIEnv; //interface to the JVM
-use jni::objects::{JClass, JString}; //stuff with lifetime
+mod error;
+
+use std::sync::Arc;
 use codemp::prelude::*;
+use rifgen::rifgen_attr::generate_interface;
+use crate::error::ErrorWrapper;
 
-const JAVA_PACKAGE: &str = "com.codemp.intellij"; 
-const JAVA_FOLDER: &str = "com/codemp/intellij";
+pub const JAVA_PACKAGE: &str = "com.codemp.intellij";
+pub const JAVA_FOLDER: &str = "com/codemp/intellij";
 
-#[no_mangle]
-pub extern "system" fn Java_CodeMP_connect<'local>(mut env: JNIEnv<'local>, class: JClass<'local>, input: JString<'local>) {
-	let addr: String = env.get_string(&input).expect("Failed to get String from JVM!").into();
-	match CODEMP_INSTANCE.connect(&addr) {
-		Ok(()) => (),
-		Err(err) => ErrorWrapper(err).throw(env)
+// #[generate_interface_doc] //TODO
+struct CodeMPHandler {}
+
+impl CodeMPHandler {
+	#[generate_interface(constructor)]
+	fn new() -> CodeMPHandler {
+		CodeMPHandler {}
 	}
-}
 
-struct ErrorWrapper(CodempError);
-
-impl From::<CodempError> for ErrorWrapper {
-	fn from(value: CodempError) -> Self {
-		ErrorWrapper(value)
-	}
-}
-
-impl ErrorWrapper {
-	fn throw(&self, mut env: JNIEnv) {
-		let exception_package: String = format!("{}/exceptions", JAVA_FOLDER);
-		let res = match &self.0 {
-			CodempError::Transport { status, message } => env.throw_new(format!("{}/TransportException", exception_package), format!("Error {}: {}", status, message)),
-			CodempError::InvalidState { msg } => env.throw_new(format!("{}/InvalidStateException", exception_package), msg),
-			CodempError::Filler { message } => env.throw_new(format!("{}/CodeMPException", exception_package), message),
-			CodempError::Channel { send } => {
-				let class_name:String = if *send { 
-					format!("{}/ChannelException/Send", exception_package)
-				} else {
-					format!("{}/ChannelException/Read", exception_package)
-				};
-				env.throw_new(class_name, "The requested channel was closed!")
-			}
-		};
-
-		if let Err(e) = res {
-			panic!("An error occurred while converting a Rust error to a Java Exception: {}", e);
+	#[generate_interface]
+	fn connect(addr: String) {
+		match CODEMP_INSTANCE.connect(&addr) {
+			Ok(()) => (),
+			Err(err) => ErrorWrapper(err) //.throw(env)
 		}
 	}
+
+	#[generate_interface]
+	fn join(session: String) -> CursorHandler {
+		let controller = CODEMP_INSTANCE.join(&session)?.unwrap();
+		CursorHandler { controller } //TODO error handling
+		/*match CODEMP_INSTANCE.join(&session) {
+			Ok(cursor) => CursorHandler { cursor },
+			//Err(err) => ErrorWrapper(err)
+		}*/
+	}
+
+	#[generate_interface]
+	fn create(path: String) {
+		CODEMP_INSTANCE.create(&path, None);
+	}
+
+	#[generate_interface]
+	fn create_with_content(path: String, content: String) {
+		CODEMP_INSTANCE.create(&path, Some(&content))
+	}
+
+	#[generate_interface]
+	fn attach(path: String) -> BufferHandler {
+		let controller = CODEMP_INSTANCE.attach(&path)?.unwrap();
+		BufferHandler { controller }
+	}
+
+	#[generate_interface]
+	fn get_cursor() -> CursorHandler {
+		let controller = CODEMP_INSTANCE.get_cursor()?.unwrap();
+		CursorHandler { controller }
+	}
+
+	#[generate_interface]
+	fn get_buffer(path: String) -> BufferHandler {
+		let controller = CODEMP_INSTANCE.get_buffer(&path)?.unwrap();
+		BufferHandler { controller }
+	}
+
+	#[generate_interface]
+	fn leave_workspace() {
+		CODEMP_INSTANCE.leave_workspace()?.unwrap()
+	}
+
+	#[generate_interface]
+	fn disconnect_buffer(path: String) -> bool {
+		CODEMP_INSTANCE.disconnect_buffer(&path)?.unwrap();
+	}
+}
+
+struct CursorHandler {
+	controller: Arc<CodempCursorController>
+}
+
+struct BufferHandler {
+	buffer: Arc<CodempBufferController>
 }

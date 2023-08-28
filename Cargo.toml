@@ -4,8 +4,14 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-codemp = { git = "ssh://git@github.com/codewithotherpeopleandchangenamelater/codemp.git", tag = "v0.4.2" }
+codemp = { git = "ssh://git@github.com-irl/codewithotherpeopleandchangenamelater/codemp.git", tag = "v0.4.2" }
 jni = "0.21.1"
+flapigen = "0.6.0"
+rifgen = "0.1.61"
+
+[build-dependencies]
+flapigen = "0.6.0"
+rifgen = "0.1.61"
 
 [lib]
 crate_type = ["cdylib"]
