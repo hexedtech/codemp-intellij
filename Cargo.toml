@@ -4,14 +4,15 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-codemp = { git = "ssh://git@github.com/codewithotherpeopleandchangenamelater/codemp.git", tag = "v0.4.5", features = ["global"] }
+codemp = { git = "ssh://git@github.com/codewithotherpeopleandchangenamelater/codemp.git", tag = "v0.4.5", features = ["global", "sync"] }
 jni = { version = "0.21.1", features = ["invocation"] }
+jni-sys = "0.3.0"
+log = "0.4.20"
 rifgen = { git = "https://github.com/Kofituo/rifgen.git", rev = "d27d9785b2febcf5527f1deb6a846be5d583f7d7"}
 
 [build-dependencies]
 flapigen = "0.6.0"
 rifgen = { git = "https://github.com/Kofituo/rifgen.git", rev = "d27d9785b2febcf5527f1deb6a846be5d583f7d7"}
-
 
 [lib]
 crate_type = ["cdylib"]
