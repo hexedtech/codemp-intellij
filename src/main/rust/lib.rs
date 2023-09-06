@@ -79,7 +79,7 @@ struct CursorHandler {
 impl CursorHandler {
 	#[generate_interface(constructor)]
 	async fn new() -> CursorHandler { //TODO: this sucks but whatever
-		CursorHandler { cursor: None }
+		panic!("Default constructor for CursrorHandler should never be called!")
 	}
 }
 
@@ -91,6 +91,6 @@ struct BufferHandler {
 impl BufferHandler {
 	#[generate_interface(constructor)]
 	async fn new() -> BufferHandler { //TODO: this sucks but whatever
-		BufferHandler { buffer: None }
+		panic!("Default constructor for BufferHandler should never be called!")
 	}
 }
