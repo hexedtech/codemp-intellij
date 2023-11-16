@@ -23,10 +23,13 @@
     <depends>com.intellij.modules.platform</depends>
 
     <actions>
-        <action id="connect" class="com.codemp.intellij.actions.ConnectAction" text="Connect">
+        <action id="codemp-connect" class="com.codemp.intellij.actions.ConnectAction" text="CodeMP Connect">
             <add-to-group group-id="ToolsMenu" anchor="first"></add-to-group>
         </action>
-    </actions>
+		<action id="codemp-join" class="com.codemp.intellij.actions.JoinAction" text="CodeMP Join">
+			<add-to-group group-id="ToolsMenu" anchor="first"></add-to-group>
+		</action>
+	</actions>
 
     <!-- Extension points defined by the plugin.
          Read more: https://plugins.jetbrains.com/docs/intellij/plugin-extension-points.html -->
