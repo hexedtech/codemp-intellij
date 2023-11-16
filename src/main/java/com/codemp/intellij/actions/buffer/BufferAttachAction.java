@@ -41,6 +41,7 @@ public class BufferAttachAction extends AnAction {
 							ApplicationManager.getApplication().runWriteAction(() -> {
 								CodeMP.LOGGER.debug("Received text change {} from offset {} to {}!\n",
 									event.getContent(), event.getStart(), event.getEnd());
+								CodeMP.LOGGER.info("is writable: {}", document.isWritable());
 								document.replaceString( //TODO this doesn't work
 									(int) event.getStart(),
 									(int) event.getEnd(),
