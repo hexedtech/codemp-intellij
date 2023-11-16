@@ -1,5 +1,6 @@
 package com.codemp.intellij.actions.buffer;
 
+import com.codemp.intellij.CodeMP;
 import com.codemp.intellij.jni.CodeMPHandler;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -7,6 +8,12 @@ import com.intellij.openapi.ui.Messages;
 import org.jetbrains.annotations.NotNull;
 
 public class BufferCreateAction extends AnAction {
+	public static void create(String buffer, boolean silent) throws Exception {
+		CodeMPHandler.create(buffer);
+		if(!silent) Messages.showInfoMessage(String.format("Created buffer %s!", buffer),
+			"Create CodeMP Buffer" );
+		CodeMP.LOGGER.debug("Created buffer {}!", buffer);
+	}
 
 	@Override
 	public void actionPerformed(@NotNull AnActionEvent e) {
@@ -16,9 +23,7 @@ public class BufferCreateAction extends AnAction {
 			Messages.getQuestionIcon());
 
 		try {
-			CodeMPHandler.create(buffer);
-			//Messages.showInfoMessage(String.format("Created buffer %s!", url), "Create CodeMP Buffer" );
-			System.out.printf("Created buffer %s!\n", buffer);
+			create(buffer, false);
 		} catch(Exception ex) {
 			Messages.showErrorDialog(String.format(
 				"Failed to create buffer with name %s: %s!",

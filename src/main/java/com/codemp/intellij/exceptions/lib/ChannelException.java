@@ -1,4 +1,6 @@
-package com.codemp.intellij.exceptions;
+package com.codemp.intellij.exceptions.rust;
+
+import com.codemp.intellij.exceptions.CodeMPException;
 
 public class ChannelException extends CodeMPException {
 	public ChannelException(String input) {

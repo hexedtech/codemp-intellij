@@ -1,5 +1,6 @@
 package com.codemp.intellij.actions;
 
+import com.codemp.intellij.CodeMP;
 import com.codemp.intellij.jni.CodeMPHandler;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -11,7 +12,6 @@ import java.io.IOException;
 
 public class ConnectAction extends AnAction {
 	public ConnectAction() {
-		super();
 		/*try {
 			NativeUtils.loadLibraryFromJar("/resources/libHelloJNI.so");
 		} catch(IOException e) {
@@ -21,19 +21,18 @@ public class ConnectAction extends AnAction {
 		System.load("O:/dev/IRL/Rust/codemp/client/intellij/target/debug/codemp_intellij.dll");
 	}
 
-	public void connect(String url) throws Exception {
+	public static void connect(String url, boolean silent) throws Exception {
 		CodeMPHandler.connect(url);
-		//Messages.showInfoMessage(String.format("Connected to %s!", url), "CodeMP");
-		System.out.printf("Connected to %s!\n", url);
+		if(!silent) Messages.showInfoMessage(String.format("Connected to %s!", url), "CodeMP");
+		CodeMP.LOGGER.debug("Connected to {}!", url);
 	}
 
 	@Override
 	public void actionPerformed(@NotNull AnActionEvent e) {
 		String url = Messages.showInputDialog("URL to CodeMP instance:", "CodeMP Connect",
 			Messages.getQuestionIcon());
-
 		try {
-			this.connect(url);
+			connect(url, false);
 		} catch(Exception ex) {
 			Messages.showErrorDialog(String.format("Failed to connect to %s: %s!", url, ex.getMessage()), "CodeMP");
 		}
