@@ -32,6 +32,7 @@ public class BufferAttachAction extends AnAction {
 
 		ProgressManager.getInstance().run(new Task.Backgroundable(e.getProject(), "Awaiting CodeMP buffer events") {
 			@Override
+			@SuppressWarnings({"InfiniteLoopStatement", "UnstableApiUsage"})
 			public void run(@NotNull ProgressIndicator indicator) {
 				while(true) {
 					try {

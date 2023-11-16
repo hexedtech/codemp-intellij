@@ -1,6 +1,6 @@
 plugins {
 	id 'java'
-	id 'org.jetbrains.intellij' version '1.14.1'
+	id 'org.jetbrains.intellij' version '1.16.0'
 }
 
 group = "com.codemp"
@@ -52,6 +52,15 @@ tasks.register('cargoBuild', Exec) {
 }
 
 compileJava.dependsOn cargoBuild
+
+tasks.register('copyBinary', Copy) {
+	from "target/debug"
+	into "src/main/resources"
+	include "*.so", "*.dll"
+	dependsOn cargoBuild
+}
+
+patchPluginXml.dependsOn copyBinary
 
 tasks.register('deleteGeneratedNativeInterface', Delete) {
 	delete 'src/main/java/com/codemp/intellij/jni'

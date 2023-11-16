@@ -27,11 +27,3 @@ public class BufferEventListener implements DocumentListener {
 		}
 	}
 }
-/*
-ABCD
-ABAACD
-
-getOffset() -> B + 1
-
-
- */
