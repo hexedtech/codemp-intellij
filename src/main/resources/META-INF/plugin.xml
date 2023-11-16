@@ -23,12 +23,21 @@
     <depends>com.intellij.modules.platform</depends>
 
     <actions>
-        <action id="codemp-connect" class="com.codemp.intellij.actions.ConnectAction" text="CodeMP Connect">
-            <add-to-group group-id="ToolsMenu" anchor="first"></add-to-group>
-        </action>
-		<action id="codemp-join" class="com.codemp.intellij.actions.JoinAction" text="CodeMP Join">
-			<add-to-group group-id="ToolsMenu" anchor="first"></add-to-group>
-		</action>
+        <group id="codemp" text="CodeMP" popup="true">
+            <add-to-group group-id="ToolsMenu" anchor="first"/>
+            <action id="codemp.connect" class="com.codemp.intellij.actions.ConnectAction" text="Connect...">
+                <add-to-group group-id="ToolsMenu" anchor="first"/>
+            </action>
+            <action id="codemp.join" class="com.codemp.intellij.actions.JoinAction" text="Join...">
+                <add-to-group group-id="ToolsMenu" anchor="first"/>
+            </action>
+            <group id="codemp.buffer" text="Buffer" popup="true">
+                <action id="codemp.buffer.create" class="com.codemp.intellij.actions.buffer.BufferCreateAction"
+                        text="Create Buffer">
+                    <add-to-group group-id="ToolsMenu" anchor="first"/>
+                </action>
+            </group>
+        </group>
 	</actions>
 
     <!-- Extension points defined by the plugin.

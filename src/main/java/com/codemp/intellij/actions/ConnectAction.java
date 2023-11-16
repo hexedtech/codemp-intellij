@@ -10,14 +10,14 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 
 public class ConnectAction extends AnAction {
-
 	static {
 		/*try {
 			NativeUtils.loadLibraryFromJar("/resources/libHelloJNI.so");
 		} catch(IOException e) {
 			throw new RuntimeException(e);
 		}*/
-		System.load("O:/dev/IRL/Rust/codemp/client/intellij/target/debug/codemp_intellij.dll");
+		System.load("/home/zaaarf/dev/irl/rust/codemp/client/intellij/target/debug/libcodemp_intellij.so");
+		//System.load("O:/dev/IRL/Rust/codemp/client/intellij/target/debug/codemp_intellij.dll");
 	}
 
 	@Override
@@ -29,7 +29,7 @@ public class ConnectAction extends AnAction {
 		try {
 			CodeMPHandler.connect(url);
 			//Messages.showInfoMessage(String.format("Connected to %s!", url), "CodeMP");
-			System.out.printf("Connected to %s!%n", url);
+			System.out.printf("Connected to %s!\n", url);
 		} catch(Exception ex) {
 			Messages.showErrorDialog(String.format("Failed to connect to %s: %s!", url, ex.getMessage()), "CodeMP");
 		}

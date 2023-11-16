@@ -24,7 +24,6 @@ import com.intellij.ui.JBColor;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -70,7 +69,7 @@ public class JoinAction extends AnAction {
 										h.dispose();
 
 									System.out.printf(
-										"Cursor moved by user %s! Start pos: x%d y%d; end pos: x%d y%d with buffer %s%n\n",
+										"Cursor moved by user %s! Start pos: x%d y%d; end pos: x%d y%d with buffer %s!\n",
 										event.getUser(),
 										event.getStartCol(), event.getStartCol(),
 										event.getEndRow(), event.getEndCol(),
