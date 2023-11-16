@@ -2,14 +2,14 @@ mod error;
 
 use std::sync::Arc;
 use codemp::prelude::*;
-use rifgen::rifgen_attr::generate_interface;
+use rifgen::rifgen_attr::{generate_interface, generate_interface_doc};
 use crate::error::ErrorWrapper;
 
 pub mod glue {
 	include!(concat!(env!("OUT_DIR"), "/glue.rs"));
 }
 
-// #[generate_interface_doc] //TODO
+#[generate_interface_doc]
 struct CodeMPHandler {}
 
 impl CodeMPHandler {
@@ -65,37 +65,112 @@ impl CodeMPHandler {
 }
 
 fn convert_buffer(result: Result<Arc<CodempBufferController>, CodempError>) -> Result<BufferHandler, String> {
-	convert(result).map(|val| BufferHandler { buffer: Some(val) })
+	convert(result).map(|val| BufferHandler { buffer: val })
 }
 
 fn convert_cursor(result: Result<Arc<CodempCursorController>, CodempError>) -> Result<CursorHandler, String> {
-	convert(result).map(|val| CursorHandler { cursor: Some(val) })
+	convert(result).map(|val| CursorHandler { cursor: val })
 }
 
 fn convert<T>(result: Result<T, CodempError>) -> Result<T, String> {
 	result.map_err(|err| ErrorWrapper::from(err).get_error_message())
 }
 
+#[generate_interface_doc]
+struct CursorEventWrapper {
+	user: String,
+	buffer: String,
+	start_row: i32,
+	start_col: i32,
+	end_row: i32,
+	end_col: i32
+}
+
+impl CursorEventWrapper {
+	#[generate_interface(constructor)]
+	fn new() -> CursorEventWrapper {
+		panic!("Default constructor for CursorEventWrapper should never be called!")
+	}
+
+	#[generate_interface]
+	fn get_user(&self) -> Result<&str, String> {
+		Ok(&self.user)
+	}
+
+	#[generate_interface]
+	fn get_buffer(&self) -> Result<&str, String> {
+		Ok(&self.buffer)
+	}
+
+	#[generate_interface]
+	fn get_start_row(&self) -> Result<i32, String> {
+		Ok(self.start_row)
+	}
+
+	#[generate_interface]
+	fn get_start_col(&self) -> Result<i32, String> {
+		Ok(self.start_col)
+	}
+
+	#[generate_interface]
+	fn get_end_row(&self) -> Result<i32, String> {
+		Ok(self.end_row)
+	}
+
+	#[generate_interface]
+	fn get_end_col(&self) -> Result<i32, String> {
+		Ok(self.end_col)
+	}
+}
+
+#[generate_interface_doc]
 struct CursorHandler {
 	#[allow(unused)]
-	cursor: Option<Arc<CodempCursorController>>
+	cursor: Arc<CodempCursorController>
 }
 
 impl CursorHandler {
 	#[generate_interface(constructor)]
-	fn new() -> CursorHandler { //TODO: this sucks but whatever
-		panic!("Default constructor for CursrorHandler should never be called!")
+	fn new() -> CursorHandler {
+		panic!("Default constructor for CursorHandler should never be called!")
+	}
+
+	#[generate_interface]
+	fn recv(&self) -> Result<CursorEventWrapper, String>  {
+		match self.cursor.blocking_recv(CODEMP_INSTANCE.rt()) {
+			Err(err) => Err(ErrorWrapper::from(err).get_error_message()),
+			Ok(event) => {
+				Ok(CursorEventWrapper {
+					user: event.user,
+					buffer: event.position.as_ref().unwrap().buffer.clone(),
+					start_row: event.position.as_ref().unwrap().start().row,
+					start_col: event.position.as_ref().unwrap().start().col,
+					end_row: event.position.as_ref().unwrap().end().row,
+					end_col: event.position.as_ref().unwrap().end().col
+				})
+			}
+		}
+	}
+
+	#[generate_interface]
+	fn send(&self, buffer: String, start_row: i32, start_col: i32, end_row: i32, end_col: i32) -> Result<(), String> {
+		self.cursor.send(CodempCursorPosition {
+			buffer,
+			start: Some(CodempRowCol { row: start_row, col: start_col }),
+			end: Some(CodempRowCol { row: end_row, col: end_col })
+		}).map_err(|err| ErrorWrapper::from(err).get_error_message())
 	}
 }
 
+#[generate_interface_doc]
 struct BufferHandler {
 	#[allow(unused)]
-	buffer: Option<Arc<CodempBufferController>>
+	buffer: Arc<CodempBufferController>
 }
 
 impl BufferHandler {
 	#[generate_interface(constructor)]
-	fn new() -> BufferHandler { //TODO: this sucks but whatever
+	fn new() -> BufferHandler {
 		panic!("Default constructor for BufferHandler should never be called!")
 	}
 }
