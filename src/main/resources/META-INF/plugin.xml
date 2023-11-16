@@ -25,17 +25,14 @@
     <actions>
         <group id="codemp" text="CodeMP" popup="true">
             <add-to-group group-id="ToolsMenu" anchor="first"/>
-            <action id="codemp.connect" class="com.codemp.intellij.actions.ConnectAction" text="Connect...">
-                <add-to-group group-id="ToolsMenu" anchor="first"/>
-            </action>
-            <action id="codemp.join" class="com.codemp.intellij.actions.JoinAction" text="Join...">
-                <add-to-group group-id="ToolsMenu" anchor="first"/>
-            </action>
+            <action id="codemp.fast-forward" class="com.codemp.intellij.actions.FastForwardAction" text="Pls hurry"/>
+            <action id="codemp.connect" class="com.codemp.intellij.actions.ConnectAction" text="Connect..."/>
+            <action id="codemp.join" class="com.codemp.intellij.actions.JoinAction" text="Join..."/>
             <group id="codemp.buffer" text="Buffer" popup="true">
                 <action id="codemp.buffer.create" class="com.codemp.intellij.actions.buffer.BufferCreateAction"
-                        text="Create Buffer">
-                    <add-to-group group-id="ToolsMenu" anchor="first"/>
-                </action>
+                        text="Create Buffer"/>
+                <action id="codemp.buffer.attach" class="com.codemp.intellij.actions.buffer.BufferAttachAction"
+                        text="Attach to Buffer"/>
             </group>
         </group>
 	</actions>

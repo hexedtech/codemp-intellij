@@ -93,33 +93,33 @@ impl CursorEventWrapper {
 	}
 
 	#[generate_interface]
-	fn get_user(&self) -> Result<&str, String> {
-		Ok(&self.user)
+	fn get_user(&self) -> &str {
+		&self.user
 	}
 
 	#[generate_interface]
-	fn get_buffer(&self) -> Result<&str, String> {
-		Ok(&self.buffer)
+	fn get_buffer(&self) -> &str {
+		&self.buffer
 	}
 
 	#[generate_interface]
-	fn get_start_row(&self) -> Result<i32, String> {
-		Ok(self.start_row)
+	fn get_start_row(&self) -> i32 {
+		self.start_row
 	}
 
 	#[generate_interface]
-	fn get_start_col(&self) -> Result<i32, String> {
-		Ok(self.start_col)
+	fn get_start_col(&self) -> i32 {
+		self.start_col
 	}
 
 	#[generate_interface]
-	fn get_end_row(&self) -> Result<i32, String> {
-		Ok(self.end_row)
+	fn get_end_row(&self) -> i32 {
+		self.end_row
 	}
 
 	#[generate_interface]
-	fn get_end_col(&self) -> Result<i32, String> {
-		Ok(self.end_col)
+	fn get_end_col(&self) -> i32 {
+		self.end_col
 	}
 }
 
@@ -139,16 +139,14 @@ impl CursorHandler {
 	fn recv(&self) -> Result<CursorEventWrapper, String>  {
 		match self.cursor.blocking_recv(CODEMP_INSTANCE.rt()) {
 			Err(err) => Err(ErrorWrapper::from(err).get_error_message()),
-			Ok(event) => {
-				Ok(CursorEventWrapper {
-					user: event.user,
-					buffer: event.position.as_ref().unwrap().buffer.clone(),
-					start_row: event.position.as_ref().unwrap().start().row,
-					start_col: event.position.as_ref().unwrap().start().col,
-					end_row: event.position.as_ref().unwrap().end().row,
-					end_col: event.position.as_ref().unwrap().end().col
-				})
-			}
+			Ok(event) => Ok(CursorEventWrapper {
+				user: event.user,
+				buffer: event.position.as_ref().unwrap().buffer.clone(),
+				start_row: event.position.as_ref().unwrap().start().row,
+				start_col: event.position.as_ref().unwrap().start().col,
+				end_row: event.position.as_ref().unwrap().end().row,
+				end_col: event.position.as_ref().unwrap().end().col
+			})
 		}
 	}
 
@@ -163,6 +161,35 @@ impl CursorHandler {
 }
 
 #[generate_interface_doc]
+struct TextChangeWrapper {
+	start: usize,
+	end: usize, //not inclusive
+	content: String
+}
+
+impl TextChangeWrapper {
+	#[generate_interface(constructor)]
+	fn new() -> TextChangeWrapper {
+		panic!("Default constructor for TextChangeWrapper should never be called!")
+	}
+
+	#[generate_interface]
+	fn get_start(&self) -> usize {
+		self.start
+	}
+
+	#[generate_interface]
+	fn get_end(&self) -> usize {
+		self.end
+	}
+
+	#[generate_interface]
+	fn get_content(&self) -> &str {
+		&self.content
+	}
+}
+
+#[generate_interface_doc]
 struct BufferHandler {
 	#[allow(unused)]
 	buffer: Arc<CodempBufferController>
@@ -172,5 +199,26 @@ impl BufferHandler {
 	#[generate_interface(constructor)]
 	fn new() -> BufferHandler {
 		panic!("Default constructor for BufferHandler should never be called!")
+	}
+
+	#[generate_interface]
+	fn recv(&self) -> Result<TextChangeWrapper, String> {
+		match self.buffer.blocking_recv(CODEMP_INSTANCE.rt()) {
+			Err(err) => Err(ErrorWrapper::from(err).get_error_message()),
+			Ok(change) => Ok(TextChangeWrapper {
+				start: change.span.start,
+				end: change.span.end,
+				content: change.content.clone()
+			})
+		}
+	}
+
+	#[generate_interface]
+	fn send(&self, start_offset: usize, end_offset: usize, content: String) -> Result<(), String> {
+		match self.buffer.delta(start_offset, &content, end_offset) {
+			None => Err("Cannot send a no-op".to_string()),
+			Some(op_seq) => self.buffer.send(op_seq)
+				.map_err(|err| ErrorWrapper::from(err).get_error_message())
+		}
 	}
 }
