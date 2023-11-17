@@ -3,7 +3,8 @@ package com.codemp.intellij.actions.buffer;
 import com.codemp.intellij.CodeMP;
 import com.codemp.intellij.exceptions.ide.BufferDetachException;
 import com.codemp.intellij.jni.CodeMPHandler;
-import com.codemp.intellij.util.DisposableRegistry;
+import com.codemp.intellij.task.BufferEventAwaiterTask;
+import com.codemp.intellij.task.TaskManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.ui.Messages;
@@ -14,12 +15,19 @@ public class BufferDetachAction extends AnAction {
 		boolean res = CodeMPHandler.detach(buffer);
 		if(!res) throw new BufferDetachException(buffer);
 
-		//dispose of listener's associated disposable
-		DisposableRegistry.disposeOf(String.format("codemp-buffer-%s", buffer));
-
-		if(!silent) Messages.showInfoMessage(String.format("Detached from buffer %s!", buffer),
-			"Detach from CodeMP Buffer" );
-		CodeMP.LOGGER.debug("Detached from buffer {}!", buffer);
+		CodeMP.ACTIVE_BUFFERS.remove(buffer);
+		BufferEventAwaiterTask task = TaskManager.getBufferTask();
+		if(task != null) {
+			task.unregisterListener(buffer);
+			if(!silent) Messages.showInfoMessage(String.format("Detached from buffer %s!", buffer),
+				"Detach from CodeMP Buffer");
+			CodeMP.LOGGER.debug("Detached from buffer {}!", buffer);
+		} else {
+			if(!silent) Messages.showErrorDialog(
+				String.format("Failed to detach from %s: buffer event task was dead!", buffer),
+				"Detach from CodeMP Buffer");
+			CodeMP.LOGGER.debug("Failed to detach from {}: buffer event task was dead!", buffer);
+		}
 	}
 
 	@Override

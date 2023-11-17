@@ -67,6 +67,11 @@ impl CodeMPHandler {
 	fn disconnect_buffer(path: String) -> Result<bool, String> {
 		convert(CODEMP_INSTANCE.disconnect_buffer(&path))
 	}
+
+	#[generate_interface]
+	fn select_buffer() -> Result<String, String> {
+		convert(CODEMP_INSTANCE.select_buffer())
+	}
 }
 
 fn convert_buffer(result: Result<Arc<CodempBufferController>, CodempError>) -> Result<BufferHandler, String> {
@@ -204,6 +209,24 @@ impl BufferHandler {
 	#[generate_interface(constructor)]
 	fn new() -> BufferHandler {
 		panic!("Default constructor for BufferHandler should never be called!")
+	}
+
+	#[generate_interface]
+	fn get_name(&self) -> String {
+		self.buffer.name.clone()
+	}
+
+	#[generate_interface]
+	fn try_recv(&self) -> Result<Option<TextChangeWrapper>, String> {
+		match self.buffer.try_recv() {
+			Err(err) => Err(ErrorWrapper::from(err).get_error_message()),
+			Ok(None) => Ok(None),
+			Ok(Some(change)) => Ok(Some(TextChangeWrapper {
+				start: change.span.start,
+				end: change.span.end,
+				content: change.content.clone()
+			}))
+		}
 	}
 
 	#[generate_interface]

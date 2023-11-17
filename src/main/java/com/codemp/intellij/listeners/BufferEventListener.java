@@ -1,5 +1,6 @@
 package com.codemp.intellij.listeners;
 
+import com.codemp.intellij.CodeMP;
 import com.codemp.intellij.jni.BufferHandler;
 import com.codemp.intellij.jni.CodeMPHandler;
 import com.intellij.openapi.command.CommandProcessor;
@@ -9,14 +10,17 @@ import org.jetbrains.annotations.NotNull;
 
 public class BufferEventListener implements DocumentListener {
 
-	private final String bufferName;
+	private final BufferHandler bufferHandler;
 
-	public BufferEventListener(String bufferName) {
-		this.bufferName = bufferName;
+	public BufferEventListener(BufferHandler bufferHandler) {
+		this.bufferHandler = bufferHandler;
 	}
 
 	@Override
 	public void documentChanged(@NotNull DocumentEvent event) {
+		CodeMP.LOGGER.debug("Changed {} to {} at offset {}",
+			event.getOldFragment(), event.getNewFragment(), event.getOffset());
+
 		Object group = CommandProcessor.getInstance().getCurrentCommandGroupId();
 		if(group instanceof String groupString && groupString.startsWith("codemp-buffer-receive"))
 			return;
@@ -24,8 +28,7 @@ public class BufferEventListener implements DocumentListener {
 		try { //TODO move actions break
 			int changeOffset = event.getOffset();
 			CharSequence newFragment = event.getNewFragment();
-			BufferHandler bufferHandler = CodeMPHandler.getBuffer(this.bufferName);
-			bufferHandler.send(changeOffset,
+			this.bufferHandler.send(changeOffset,
 				changeOffset + event.getOldFragment().length(),
 				newFragment.toString());
 		} catch(Exception e) {

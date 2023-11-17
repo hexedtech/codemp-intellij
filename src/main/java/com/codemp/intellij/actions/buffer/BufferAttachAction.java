@@ -3,72 +3,27 @@ package com.codemp.intellij.actions.buffer;
 import com.codemp.intellij.CodeMP;
 import com.codemp.intellij.jni.BufferHandler;
 import com.codemp.intellij.jni.CodeMPHandler;
-import com.codemp.intellij.jni.TextChangeWrapper;
-import com.codemp.intellij.listeners.BufferEventListener;
+import com.codemp.intellij.task.TaskManager;
 import com.codemp.intellij.util.ActionUtil;
-import com.codemp.intellij.util.DisposableRegistry;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.Task;
-import com.intellij.openapi.project.Project;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.ui.Messages;
 import org.jetbrains.annotations.NotNull;
 
 public class BufferAttachAction extends AnAction {
-
 	public static void attach(AnActionEvent e, String buffer, boolean silent) throws Exception {
 		BufferHandler bufferHandler = CodeMPHandler.attach(buffer);
 		if(!silent) Messages.showInfoMessage(String.format("Attached to buffer to %s!", buffer),
 			"CodeMP Buffer Attach");
 		CodeMP.LOGGER.debug("Attached to buffer to {}!", buffer);
 
-		//register buffer change listener
-		//TODO "get" the Document corresponding to buffer, for now use the current one
-		BufferEventListener listener = new BufferEventListener(buffer);
+		//TODO "get" the Editor corresponding to buffer, for now use the current one
+		Editor editor = ActionUtil.getCurrentEditor(e);
 
-		Project project = ActionUtil.getCurrentProject(e);
-		Document document = ActionUtil.getCurrentEditor(e).getDocument();
-		document.addDocumentListener(listener, DisposableRegistry.getOrCreate(String.format("codemp-buffer-%s", buffer)));
-
-		ProgressManager.getInstance().run(new Task.Backgroundable(e.getProject(), "Awaiting CodeMP buffer events") {
-			@Override
-			@SuppressWarnings({"InfiniteLoopStatement", "UnstableApiUsage"})
-			public void run(@NotNull ProgressIndicator indicator) {
-				try {
-					Thread.sleep(100); //tonioware
-				} catch(InterruptedException ex) {
-					throw new RuntimeException(ex);
-				}
-
-				while(true) {
-					try {
-						TextChangeWrapper event = bufferHandler.recv();
-
-						CodeMP.LOGGER.debug("Received text change {} from offset {} to {}!",
-							event.getContent(), event.getStart(), event.getEnd());
-
-						ApplicationManager.getApplication().invokeLaterOnWriteThread(() -> {
-							ApplicationManager.getApplication().runWriteAction(() -> {
-								CommandProcessor.getInstance().executeCommand(
-									project,
-									() -> document.replaceString(
-										(int) event.getStart(), (int) event.getEnd(), event.getContent()),
-									"CodeMPBufferReceive",
-									"codemp-buffer-receive", //TODO: mark this with the name
-									document);
-							});
-						});
-					} catch(Exception ex) {
-						throw new RuntimeException(ex);
-					}
-				}
-			}
-		});
+		TaskManager
+			.getOrCreateBufferTask(ActionUtil.getCurrentProject(e))
+			.registerListener(bufferHandler, editor);
 	}
 
 	@Override
