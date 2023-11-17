@@ -6,6 +6,7 @@ import com.codemp.intellij.jni.CodeMPHandler;
 import com.codemp.intellij.jni.TextChangeWrapper;
 import com.codemp.intellij.listeners.BufferEventListener;
 import com.codemp.intellij.util.ActionUtil;
+import com.codemp.intellij.util.DisposableRegistry;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
@@ -32,12 +33,18 @@ public class BufferAttachAction extends AnAction {
 
 		Project project = ActionUtil.getCurrentProject(e);
 		Document document = ActionUtil.getCurrentEditor(e).getDocument();
-		document.addDocumentListener(listener);
+		document.addDocumentListener(listener, DisposableRegistry.getOrCreate(String.format("codemp-buffer-%s", buffer)));
 
 		ProgressManager.getInstance().run(new Task.Backgroundable(e.getProject(), "Awaiting CodeMP buffer events") {
 			@Override
 			@SuppressWarnings({"InfiniteLoopStatement", "UnstableApiUsage"})
 			public void run(@NotNull ProgressIndicator indicator) {
+				try {
+					Thread.sleep(100); //tonioware
+				} catch(InterruptedException ex) {
+					throw new RuntimeException(ex);
+				}
+
 				while(true) {
 					try {
 						TextChangeWrapper event = bufferHandler.recv();

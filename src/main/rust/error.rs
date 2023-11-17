@@ -1,3 +1,4 @@
+use codemp::Error;
 use codemp::prelude::CodempError;
 
 pub struct ErrorWrapper(CodempError);
@@ -15,6 +16,7 @@ impl ErrorWrapper {
                 format!("Error {}: {}", status, message),
             CodempError::InvalidState { msg } => msg.to_string(),
             CodempError::Filler { message } => message.to_string(),
+					Error::Deadlocked => { "Error: deadlocked! (safe to retry)".to_string() }
             CodempError::Channel { send } => {
                 if *send {
                     "Error while sending message on channel: the channel was closed!".to_string()
@@ -22,6 +24,6 @@ impl ErrorWrapper {
                     "Error while reading message from channel: the channel was closed!".to_string()
                 }
             }
-        }
+				}
     }
 }

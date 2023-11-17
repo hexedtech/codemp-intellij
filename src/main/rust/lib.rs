@@ -44,6 +44,11 @@ impl CodeMPHandler {
 	}
 
 	#[generate_interface]
+	fn detach(path: String) -> Result<bool, String> {
+		convert(CODEMP_INSTANCE.disconnect_buffer(&path))
+	}
+
+	#[generate_interface]
 	fn get_cursor() -> Result<CursorHandler, String> {
 		convert_cursor(CODEMP_INSTANCE.get_cursor())
 	}
@@ -154,8 +159,8 @@ impl CursorHandler {
 	fn send(&self, buffer: String, start_row: i32, start_col: i32, end_row: i32, end_col: i32) -> Result<(), String> {
 		self.cursor.send(CodempCursorPosition {
 			buffer,
-			start: Some(CodempRowCol { row: start_row, col: start_col }),
-			end: Some(CodempRowCol { row: end_row, col: end_col })
+			start: CodempRowCol::wrap(start_row, start_col),
+			end: CodempRowCol::wrap(end_row, end_col)
 		}).map_err(|err| ErrorWrapper::from(err).get_error_message())
 	}
 }
@@ -205,20 +210,17 @@ impl BufferHandler {
 	fn recv(&self) -> Result<TextChangeWrapper, String> {
 		match self.buffer.blocking_recv(CODEMP_INSTANCE.rt()) {
 			Err(err) => Err(ErrorWrapper::from(err).get_error_message()),
-			Ok(change) => {
-				println!("test {:?}", change);
-				Ok(TextChangeWrapper {
-					start: change.span.start,
-					end: change.span.end,
-					content: change.content.clone()
-				})
-			}
+			Ok(change) => Ok(TextChangeWrapper {
+				start: change.span.start,
+				end: change.span.end,
+				content: change.content.clone()
+			})
 		}
 	}
 
 	#[generate_interface]
 	fn send(&self, start_offset: usize, end_offset: usize, content: String) -> Result<(), String> {
-		self.buffer.send(CodempTextChange { span: start_offset..end_offset, content, after: "".to_string() })
+		self.buffer.send(CodempTextChange { span: start_offset..end_offset, content })
 			.map_err(|err| ErrorWrapper::from(err).get_error_message())
 	}
 }

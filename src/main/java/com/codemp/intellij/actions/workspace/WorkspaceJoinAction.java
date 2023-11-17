@@ -1,4 +1,4 @@
-package com.codemp.intellij.actions;
+package com.codemp.intellij.actions.workspace;
 
 import com.codemp.intellij.CodeMP;
 import com.codemp.intellij.jni.CodeMPHandler;
@@ -7,7 +7,7 @@ import com.codemp.intellij.jni.CursorHandler;
 import com.codemp.intellij.listeners.CursorEventListener;
 import com.codemp.intellij.util.ActionUtil;
 import com.codemp.intellij.util.ColorUtil;
-import com.intellij.openapi.Disposable;
+import com.codemp.intellij.util.DisposableRegistry;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
@@ -25,18 +25,18 @@ import com.intellij.openapi.ui.Messages;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
-public class JoinAction extends AnAction {
+public class WorkspaceJoinAction extends AnAction {
 
-	private static final Map<String, RangeHighlighter> highlighterMap = new HashMap<>();
+	private static final Map<String, RangeHighlighter> highlighterMap = new ConcurrentHashMap<>();
 
-	public static void join(AnActionEvent e, String session, boolean silent) throws Exception {
-		CursorHandler cursorHandler = CodeMPHandler.join(session);
+	public static void join(AnActionEvent e, String workspace, boolean silent) throws Exception {
+		CursorHandler cursorHandler = CodeMPHandler.join(workspace);
 
-		if(!silent) Messages.showInfoMessage(String.format("Joined session %s!", session), "CodeMP");
-		else CodeMP.LOGGER.debug("Joined session {}!", session);
+		if(!silent) Messages.showInfoMessage(String.format("Joined workspace %s!", workspace), "CodeMP");
+		else CodeMP.LOGGER.debug("Joined workspace {}!", workspace);
 
 		Editor editor = ActionUtil.getCurrentEditor(e);
 
@@ -49,7 +49,8 @@ public class JoinAction extends AnAction {
 
 		EditorFactory.getInstance()
 			.getEventMulticaster()
-			.addCaretListener(new CursorEventListener(), task);
+			.addCaretListener(new CursorEventListener(),
+				DisposableRegistry.getOrCreate(String.format("codemp-cursor-%s", workspace)));
 
 		ProgressManager.getInstance().run(task);
 	}
@@ -74,7 +75,7 @@ public class JoinAction extends AnAction {
 
 	//TODO this is janky as it shows a progress bar it doesn't use tbh
 	//implements disposable so i can use it as lifetime ig
-	private static class CursorEventAwaiter extends Task.Backgroundable implements Disposable {
+	private static class CursorEventAwaiter extends Task.Backgroundable {
 
 		private final CursorHandler handler;
 		private final Editor editor;
@@ -84,9 +85,6 @@ public class JoinAction extends AnAction {
 			this.handler = handler;
 			this.editor = editor;
 		}
-
-		@Override
-		public void dispose() {}
 
 		@Override
 		@SuppressWarnings("InfiniteLoopStatement")

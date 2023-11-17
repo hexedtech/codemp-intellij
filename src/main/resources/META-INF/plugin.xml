@@ -27,16 +27,24 @@
             <add-to-group group-id="ToolsMenu" anchor="first"/>
             <action id="codemp.fast-forward" class="com.codemp.intellij.actions.FastForwardAction" text="Just Hurry"/>
             <action id="codemp.connect" class="com.codemp.intellij.actions.ConnectAction" text="Connect..."/>
-            <action id="codemp.join" class="com.codemp.intellij.actions.JoinAction" text="Join..."/>
-            <group id="codemp.buffer" text="Buffer" popup="true">
-                <action id="codemp.buffer.create" class="com.codemp.intellij.actions.buffer.BufferCreateAction"
-                        text="Create Buffer"/>
-                <action id="codemp.buffer.create-with-content"
-                        class="com.codemp.intellij.actions.buffer.BufferCreateWithContentAction"
-                        text="Create Buffer with Content"/>
-                <action id="codemp.buffer.attach" class="com.codemp.intellij.actions.buffer.BufferAttachAction"
-                        text="Attach to Buffer"/>
-            </group>
+
+			<group id="codemp.workspace" text="Workspace" popup="true">
+				<action id="codemp.workspace.join" class="com.codemp.intellij.actions.workspace.WorkspaceJoinAction"
+						text="Join Workspace"/>
+				<action id="codemp.workspace.leave" class="com.codemp.intellij.actions.workspace.WorkspaceLeaveAction"
+						text="Leave Workspace"/>
+			</group>
+			<group id="codemp.buffer" text="Buffer" popup="true">
+				<action id="codemp.buffer.create" class="com.codemp.intellij.actions.buffer.BufferCreateAction"
+						text="Create Buffer"/>
+				<action id="codemp.buffer.create-with-content"
+						class="com.codemp.intellij.actions.buffer.BufferCreateWithContentAction"
+						text="Create Buffer with Content"/>
+				<action id="codemp.buffer.attach" class="com.codemp.intellij.actions.buffer.BufferAttachAction"
+						text="Attach to Buffer"/>
+				<action id="codemp.buffer.detach" class="com.codemp.intellij.actions.buffer.BufferDetachAction"
+						text="Detach from Buffer"/>
+			</group>
         </group>
 	</actions>
 
