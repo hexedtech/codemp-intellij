@@ -13,8 +13,9 @@ public class BufferCreateWithContentAction extends AnAction {
 	public static void createWithContent(AnActionEvent event, String buffer, boolean silent) throws Exception {
 		String content = ActionUtil.getCurrentEditor(event).getDocument().getText();
 		CodeMPHandler.createWithContent(buffer, content);
-		if(!silent) Messages.showInfoMessage(String.format("Created buffer %s with content %s!", buffer, content),
-			"Create CodeMP Buffer" );
+
+		if(!silent) ActionUtil.notify(event, "Success", String.format(
+			"Created buffer %s with content %s!", buffer, content));
 		CodeMP.LOGGER.debug("Created buffer {} with content {}!", buffer, content);
 	}
 	@Override
@@ -27,9 +28,9 @@ public class BufferCreateWithContentAction extends AnAction {
 		try {
 			createWithContent(e, buffer, false);
 		} catch(Exception ex) {
-			Messages.showErrorDialog(String.format(
-				"Failed to create buffer with name %s: %s!",
-				buffer, ex.getMessage()), "Create CodeMP Buffer with Content");
+			ActionUtil.notifyError(e, String.format(
+				"Failed to create buffer with name %s!",
+				buffer), ex);
 		}
 	}
 }

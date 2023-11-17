@@ -14,8 +14,9 @@ import org.jetbrains.annotations.NotNull;
 public class BufferAttachAction extends AnAction {
 	public static void attach(AnActionEvent e, String buffer, boolean silent) throws Exception {
 		BufferHandler bufferHandler = CodeMPHandler.attach(buffer);
-		if(!silent) Messages.showInfoMessage(String.format("Attached to buffer to %s!", buffer),
-			"CodeMP Buffer Attach");
+		if(!silent) ActionUtil.notify(e, "Success",
+			String.format("Successfully attached to buffer to buffer to %s!", buffer)
+		);
 		CodeMP.LOGGER.debug("Attached to buffer to {}!", buffer);
 
 		//TODO "get" the Editor corresponding to buffer, for now use the current one
@@ -35,9 +36,9 @@ public class BufferAttachAction extends AnAction {
 		try {
 			attach(e, buffer, false);
 		} catch(Exception ex) {
-			Messages.showErrorDialog(String.format(
-				"Failed to attach to buffer %s: %s!",
-				buffer, ex.getMessage()), "Attach to CodeMP Buffer");
+			ActionUtil.notifyError(e, String.format(
+				"Failed to attach to buffer %s!",
+				buffer), ex);
 		}
 	}
 }

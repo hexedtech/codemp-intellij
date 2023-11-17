@@ -10,8 +10,6 @@ import com.codemp.intellij.util.ActionUtil;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import org.jetbrains.annotations.NotNull;
 
@@ -19,8 +17,9 @@ public class WorkspaceJoinAction extends AnAction {
 	public static void join(AnActionEvent e, String workspace, boolean silent) throws Exception {
 		CursorHandler cursorHandler = CodeMPHandler.join(workspace);
 
-		if(!silent) Messages.showInfoMessage(String.format("Joined workspace %s!", workspace), "CodeMP");
-		else CodeMP.LOGGER.debug("Joined workspace {}!", workspace);
+		if(!silent) ActionUtil.notify(e,
+			"Success", String.format("Joined workspace %s!", workspace));
+		CodeMP.LOGGER.debug("Joined workspace {}!", workspace);
 
 		CursorEventAwaiterTask task = TaskManager
 			.getOrCreateCursorTask(ActionUtil.getCurrentProject(e), cursorHandler);
@@ -40,11 +39,9 @@ public class WorkspaceJoinAction extends AnAction {
 		try {
 			join(e, session, false);
 		} catch(Exception ex) {
-			Messages.showErrorDialog(String.format(
-					"Failed to join session %s: %s!",
-					session,
-					ex.getMessage()),
-				"CodeMP Join");
+			ActionUtil.notifyError(e, String.format(
+				"Failed to join session %s!",
+				session), ex);
 		}
 	}
 }

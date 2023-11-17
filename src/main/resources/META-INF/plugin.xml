@@ -49,7 +49,6 @@
 	</actions>
 
     <extensions defaultExtensionNs="com.intellij">
-        <!-- Extension points defined by the plugin.
-        Read more: https://plugins.jetbrains.com/docs/intellij/plugin-extension-points.html -->
+		<notificationGroup id="CodeMP" displayType="BALLOON"/>
     </extensions>
 </idea-plugin>

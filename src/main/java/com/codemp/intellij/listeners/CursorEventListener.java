@@ -1,7 +1,6 @@
 package com.codemp.intellij.listeners;
 
 import com.codemp.intellij.CodeMP;
-import com.codemp.intellij.jni.CodeMPHandler;
 import com.codemp.intellij.jni.CursorHandler;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.VisualPosition;

@@ -2,7 +2,6 @@ package com.codemp.intellij.listeners;
 
 import com.codemp.intellij.CodeMP;
 import com.codemp.intellij.jni.BufferHandler;
-import com.codemp.intellij.jni.CodeMPHandler;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
