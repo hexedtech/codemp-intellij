@@ -8,11 +8,8 @@ public class ColorUtil {
 	public static JBColor colorFromUsername(String username) {
 		int hash = username.hashCode();
 
-		Color hashColor = Color.decode( //Integer.toHexString(((hash >> 24) & 0xFF)) +
-			Integer.toHexString(((hash >> 16) & 0xFF)) +
-			Integer.toHexString(((hash >> 8) & 0xFF)) +
-			Integer.toHexString((hash & 0xFF))
-		);
+		@SuppressWarnings("all")
+		Color hashColor = new Color(hash | (0xFF << 24));
 
 		return new JBColor(hashColor, hashColor.darker());
 	}

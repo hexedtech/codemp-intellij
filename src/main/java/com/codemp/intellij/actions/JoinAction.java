@@ -94,6 +94,9 @@ public class JoinAction extends AnAction {
 			while(true) {
 				try {
 					CursorEventWrapper event = handler.recv();
+					int startOffset = this.editor.getDocument().getLineStartOffset(event.getStartRow()) + event.getStartCol();
+					int endOffset = this.editor.getDocument().getLineStartOffset(event.getEndRow()) + event.getEndCol();
+
 					ApplicationManager.getApplication().invokeLater(() -> {
 						try {
 							RangeHighlighter highlighter = highlighterMap.get(event.getUser());
@@ -110,8 +113,8 @@ public class JoinAction extends AnAction {
 							highlighterMap.put(event.getUser(), this.editor
 								.getMarkupModel()
 								.addRangeHighlighter(
-									this.editor.getDocument().getLineStartOffset(event.getStartRow()) + event.getStartCol(),
-									this.editor.getDocument().getLineStartOffset(event.getEndRow()) + event.getEndCol(),
+									startOffset,
+									endOffset,
 									HighlighterLayer.SELECTION,
 									new TextAttributes(
 										null,
@@ -121,8 +124,12 @@ public class JoinAction extends AnAction {
 										Font.PLAIN
 									), HighlighterTargetArea.EXACT_RANGE
 								));
+						} catch(IllegalArgumentException ex) {
+							//suppress if the cursor only exceeds length by one, it's probably just him adding something at EOF
+							if(endOffset - this.editor.getDocument().getTextLength() != 1)
+								throw ex;
 						} catch(Exception ex) {
-							throw new RuntimeException();
+							throw new RuntimeException(ex);
 						}
 					});
 				} catch(Exception ex) {

@@ -184,8 +184,8 @@ impl TextChangeWrapper {
 	}
 
 	#[generate_interface]
-	fn get_content(&self) -> &str {
-		&self.content
+	fn get_content(&self) -> String {
+		self.content.clone()
 	}
 }
 
@@ -205,20 +205,20 @@ impl BufferHandler {
 	fn recv(&self) -> Result<TextChangeWrapper, String> {
 		match self.buffer.blocking_recv(CODEMP_INSTANCE.rt()) {
 			Err(err) => Err(ErrorWrapper::from(err).get_error_message()),
-			Ok(change) => Ok(TextChangeWrapper {
-				start: change.span.start,
-				end: change.span.end,
-				content: change.content.clone()
-			})
+			Ok(change) => {
+				println!("test {:?}", change);
+				Ok(TextChangeWrapper {
+					start: change.span.start,
+					end: change.span.end,
+					content: change.content.clone()
+				})
+			}
 		}
 	}
 
 	#[generate_interface]
 	fn send(&self, start_offset: usize, end_offset: usize, content: String) -> Result<(), String> {
-		match self.buffer.delta(start_offset, &content, end_offset) {
-			None => Err("Cannot send a no-op".to_string()),
-			Some(op_seq) => self.buffer.send(op_seq)
-				.map_err(|err| ErrorWrapper::from(err).get_error_message())
-		}
+		self.buffer.send(CodempTextChange { span: start_offset..end_offset, content, after: "".to_string() })
+			.map_err(|err| ErrorWrapper::from(err).get_error_message())
 	}
 }

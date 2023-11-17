@@ -12,7 +12,7 @@ public class FastForwardAction extends AnAction {
 	@Override
 	public void actionPerformed(@NotNull AnActionEvent e) {
 		try {
-			ConnectAction.connect("http://alemi.dev:50051", true);
+			ConnectAction.connect("http://alemi.dev:50052", true);
 			JoinAction.join(e, "default", true);
 			BufferAttachAction.attach(e, "test", true);
 		} catch(Exception ex) {
