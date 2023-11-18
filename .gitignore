@@ -47,5 +47,8 @@ Cargo.lock
 .cargo
 target
 
+#IntelliJ test client run config
+.run/
+
 # Do not include generated code
 src/main/java/com/codemp/intellij/jni
