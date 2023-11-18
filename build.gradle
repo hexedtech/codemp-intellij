@@ -1,10 +1,11 @@
 plugins {
 	id 'java'
 	id 'org.jetbrains.intellij' version '1.16.0'
+	id 'com.github.johnrengelman.shadow' version '8.1.1'
 }
 
-group = "com.codemp"
-version = "0.1.0"
+group = 'com.codemp'
+version = '0.1.0'
 
 java {
 	sourceCompatibility = targetCompatibility = JavaVersion.VERSION_17
@@ -12,42 +13,51 @@ java {
 
 repositories {
 	mavenCentral()
+	maven { url 'https://jitpack.io' }
 }
 
 dependencies {
+	implementation 'com.github.adamheinrich:native-utils:master-SNAPSHOT'
 	implementation 'org.slf4j:slf4j-api:2.0.9'
 	implementation 'ch.qos.logback:logback-classic:1.4.6'
 }
 
 intellij {
-	version.set("2022.2.5")
-	type.set("IC")
+	version.set('2022.2.5')
+	type.set('IC')
 }
 
-def cargoDir = projectDir.toPath().resolve("target").resolve("release").toFile()
+shadowJar {
+	archiveClassifier.set('')
+	dependencies {
+		include(dependency('com.github.adamheinrich:native-utils:master-SNAPSHOT'))
+	}
+}
+
+def cargoDir = projectDir.toPath().resolve('target').resolve('release').toFile()
 
 processResources {
 	from(cargoDir) {
-		include("*.dll")
-		include("*.so")
-		into("natives/")
+		include('*.dll')
+		include('*.so')
+		into('natives/')
 	}
 }
 
 tasks {
 	patchPluginXml {
-		sinceBuild.set("222")
-		untilBuild.set("232.*")
+		sinceBuild.set('222')
+		untilBuild.set('232.*')
 	}
 
 	signPlugin {
-		certificateChain.set(System.getenv("CERTIFICATE_CHAIN"))
-		privateKey.set(System.getenv("PRIVATE_KEY"))
-		password.set(System.getenv("PRIVATE_KEY_PASSWORD"))
+		certificateChain.set(System.getenv('CERTIFICATE_CHAIN'))
+		privateKey.set(System.getenv('PRIVATE_KEY'))
+		password.set(System.getenv('PRIVATE_KEY_PASSWORD'))
 	}
 
 	publishPlugin {
-		token.set(System.getenv("PUBLISH_TOKEN"))
+		token.set(System.getenv('PUBLISH_TOKEN'))
 	}
 }
 
@@ -75,3 +85,5 @@ tasks.register('cargoClean', Exec) {
 }
 
 clean.dependsOn cargoClean
+
+instrumentedJar.dependsOn shadowJar //TODO: instrumentedJar should use fatjar as input
