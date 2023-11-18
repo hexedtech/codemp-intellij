@@ -4,7 +4,7 @@ plugins {
 }
 
 group = "com.codemp"
-version = "1.0-SNAPSHOT"
+version = "0.1.0"
 
 java {
 	sourceCompatibility = targetCompatibility = JavaVersion.VERSION_17
@@ -21,13 +21,9 @@ dependencies {
 	implementation 'ch.qos.logback:logback-classic:1.4.6'
 }
 
-// Configure Gradle IntelliJ Plugin
-// Read more: https://plugins.jetbrains.com/docs/intellij/tools-gradle-intellij-plugin.html
 intellij {
 	version.set("2022.2.5")
-	type.set("IC") // Target IDE Platform
-
-	//plugins.set(listOf(/* Plugin Dependencies */))
+	type.set("IC")
 }
 
 tasks {
@@ -47,7 +43,7 @@ tasks {
 	}
 }
 
-//define rust tasks
+//run cargo build
 tasks.register('cargoBuild', Exec) {
 	workingDir '.'
 	commandLine 'cargo', 'build'
@@ -55,6 +51,7 @@ tasks.register('cargoBuild', Exec) {
 
 compileJava.dependsOn cargoBuild
 
+//copy the generated binary into the resources folder
 tasks.register('copyBinary', Copy) {
 	from "target/debug"
 	into "src/main/resources"
@@ -64,10 +61,12 @@ tasks.register('copyBinary', Copy) {
 
 patchPluginXml.dependsOn copyBinary
 
+//delete old jni generated files
 tasks.register('deleteGeneratedNativeInterface', Delete) {
 	delete 'src/main/java/com/codemp/intellij/jni'
 }
 
+//delete cargo build files
 tasks.register('cargoClean', Exec) {
 	workingDir '.'
 	commandLine 'cargo', 'clean'
