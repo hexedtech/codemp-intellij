@@ -1,4 +1,4 @@
-package com.codemp.intellij.exceptions.rust;
+package com.codemp.intellij.exceptions.lib;
 
 import com.codemp.intellij.exceptions.CodeMPException;
 

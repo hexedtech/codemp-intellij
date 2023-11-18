@@ -2,10 +2,10 @@ mod error;
 
 use std::sync::Arc;
 use codemp::prelude::*;
-use rifgen::rifgen_attr::{generate_interface, generate_interface_doc};
+use rifgen::rifgen_attr::{generate_access_methods, generate_interface, generate_interface_doc};
 use crate::error::ErrorWrapper;
 
-pub mod glue {
+pub mod glue { //rifgen generated code
 	include!(concat!(env!("OUT_DIR"), "/glue.rs"));
 }
 
@@ -87,6 +87,7 @@ fn convert<T>(result: Result<T, CodempError>) -> Result<T, String> {
 }
 
 #[generate_interface_doc]
+#[generate_access_methods]
 struct CursorEventWrapper {
 	user: String,
 	buffer: String,
@@ -96,42 +97,6 @@ struct CursorEventWrapper {
 	end_col: i32
 }
 
-impl CursorEventWrapper {
-	#[generate_interface(constructor)]
-	fn new() -> CursorEventWrapper {
-		panic!("Default constructor for CursorEventWrapper should never be called!")
-	}
-
-	#[generate_interface]
-	fn get_user(&self) -> &str {
-		&self.user
-	}
-
-	#[generate_interface]
-	fn get_buffer(&self) -> &str {
-		&self.buffer
-	}
-
-	#[generate_interface]
-	fn get_start_row(&self) -> i32 {
-		self.start_row
-	}
-
-	#[generate_interface]
-	fn get_start_col(&self) -> i32 {
-		self.start_col
-	}
-
-	#[generate_interface]
-	fn get_end_row(&self) -> i32 {
-		self.end_row
-	}
-
-	#[generate_interface]
-	fn get_end_col(&self) -> i32 {
-		self.end_col
-	}
-}
 
 #[generate_interface_doc]
 struct CursorHandler {
@@ -171,32 +136,11 @@ impl CursorHandler {
 }
 
 #[generate_interface_doc]
+#[generate_access_methods]
 struct TextChangeWrapper {
 	start: usize,
 	end: usize, //not inclusive
 	content: String
-}
-
-impl TextChangeWrapper {
-	#[generate_interface(constructor)]
-	fn new() -> TextChangeWrapper {
-		panic!("Default constructor for TextChangeWrapper should never be called!")
-	}
-
-	#[generate_interface]
-	fn get_start(&self) -> usize {
-		self.start
-	}
-
-	#[generate_interface]
-	fn get_end(&self) -> usize {
-		self.end
-	}
-
-	#[generate_interface]
-	fn get_content(&self) -> String {
-		self.content.clone()
-	}
 }
 
 #[generate_interface_doc]

@@ -13,8 +13,8 @@ import java.util.concurrent.ConcurrentHashMap;
 public class CodeMP {
 	public static Logger LOGGER = LoggerFactory.getLogger(CodeMP.class);
 
-	public static Map<String, Editor> ACTIVE_BUFFERS = new ConcurrentHashMap<>();
-	public static Map<Editor, String> ACTIVE_BUFFERS_REVERSE = new ConcurrentHashMap<>(); //TODO jank
+	public static final Map<String, Editor> ACTIVE_BUFFERS = new ConcurrentHashMap<>();
+	public static final Map<Editor, String> ACTIVE_BUFFERS_REVERSE = new ConcurrentHashMap<>();
 
 	private static boolean loadedLibrary = false;
 	public static void loadLibrary() {
@@ -29,6 +29,7 @@ public class CodeMP {
 				LOGGER.info("Loaded CodeMP library!");
 				loadedLibrary = false;
 			}
+
 		}
 	}
 }
