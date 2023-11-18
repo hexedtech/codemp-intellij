@@ -49,5 +49,3 @@ target
 
 # Do not include generated code
 src/main/java/com/codemp/intellij/jni
-src/main/resources/*.so
-src/main/resources/*.dll

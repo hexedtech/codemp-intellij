@@ -24,6 +24,16 @@ intellij {
 	type.set("IC")
 }
 
+def cargoDir = projectDir.toPath().resolve("target").resolve("release").toFile()
+
+processResources {
+	from(cargoDir) {
+		include("*.dll")
+		include("*.so")
+		into("natives/")
+	}
+}
+
 tasks {
 	patchPluginXml {
 		sinceBuild.set("222")
@@ -44,20 +54,10 @@ tasks {
 //run cargo build
 tasks.register('cargoBuild', Exec) {
 	workingDir '.'
-	commandLine 'cargo', 'build'
+	commandLine 'cargo', 'build', '--release'
 }
 
 compileJava.dependsOn cargoBuild
-
-//copy the generated binary into the resources folder
-tasks.register('copyBinary', Copy) {
-	from "target/debug"
-	into "src/main/resources"
-	include "*.so", "*.dll"
-	dependsOn cargoBuild
-}
-
-patchPluginXml.dependsOn copyBinary
 
 //delete old jni generated files
 tasks.register('deleteGeneratedNativeInterface', Delete) {

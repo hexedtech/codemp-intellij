@@ -21,8 +21,8 @@ public class CodeMP {
 		if(!loadedLibrary) {
 			try {
 				if(SystemInfo.isWindows) //TODO on win for some reason it bundles it twice
-					NativeUtils.loadLibraryFromJar("/codemp_intellij.dll");
-				else NativeUtils.loadLibraryFromJar("/libcodemp_intellij.so");
+					NativeUtils.loadLibraryFromJar("/natives/codemp_intellij.dll");
+				else NativeUtils.loadLibraryFromJar("/natives/libcodemp_intellij.so");
 			} catch(IOException e) {
 				throw new RuntimeException(e);
 			} finally {
