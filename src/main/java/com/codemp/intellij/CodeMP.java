@@ -1,8 +1,8 @@
 package com.codemp.intellij;
 
+import com.codemp.intellij.util.NativeUtils;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.SystemInfo;
-import cz.adamh.utils.NativeUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
