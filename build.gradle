@@ -57,12 +57,15 @@ tasks.register('cargoBuild', Exec) {
 	commandLine 'cargo', 'build', '--release'
 }
 
-compileJava.dependsOn cargoBuild
+//must act before all other tasks who mess with resources to reliably get the binary in
+patchPluginXml.dependsOn cargoBuild
 
 //delete old jni generated files
 tasks.register('deleteGeneratedNativeInterface', Delete) {
 	delete 'src/main/java/com/codemp/intellij/jni'
 }
+
+cargoBuild.dependsOn deleteGeneratedNativeInterface
 
 //delete cargo build files
 tasks.register('cargoClean', Exec) {
