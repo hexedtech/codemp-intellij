@@ -75,8 +75,6 @@ tasks.register('deleteGeneratedNativeInterface', Delete) {
 	delete 'src/main/java/com/codemp/intellij/jni'
 }
 
-cargoBuild.dependsOn deleteGeneratedNativeInterface
-
 //delete cargo build files
 tasks.register('cargoClean', Exec) {
 	workingDir '.'
