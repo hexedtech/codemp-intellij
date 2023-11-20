@@ -9,7 +9,9 @@ fn main() {
 	let out_dir = Path::new(&out_dir_var);
 	let generated_glue_file = out_dir.join("generated_glue.in");
 
-	let src_dir = Path::new("src/main/rust/");
+	let src_dir = Path::new("src")
+		.join("main")
+		.join("rust");
 	let glue_file = src_dir.join("glue.in");
 
 	RifgenGenerator::new(TypeCases::CamelCase,Language::Java, vec!(src_dir))
@@ -39,8 +41,5 @@ fn main() {
 		out_dir.join("glue.rs"),
 	);
 
-	println!(
-		"cargo:rerun-if-changed={}",
-		Path::new("src/main").join(&generated_glue_file).display()
-	);
+	println!("cargo:rerun-if-changed={}", generated_glue_file.display());
 }
