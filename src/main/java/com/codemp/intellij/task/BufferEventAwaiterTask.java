@@ -1,6 +1,7 @@
 package com.codemp.intellij.task;
 
 import com.codemp.intellij.CodeMP;
+import com.codemp.intellij.exceptions.lib.DeadlockedException;
 import com.codemp.intellij.jni.BufferHandler;
 import com.codemp.intellij.jni.CodeMPHandler;
 import com.codemp.intellij.jni.TextChangeWrapper;
@@ -67,11 +68,9 @@ public class BufferEventAwaiterTask extends Task.Backgroundable implements Dispo
 						Optional<TextChangeWrapper> changeOptional;
 						try {
 							 changeOptional = handler.tryRecv();
-						} catch(Exception e) {
+						} catch(DeadlockedException e) {
 							CodeMP.LOGGER.error(e.getMessage());
-							if(e.getMessage().equals("Error: deadlocked! (safe to retry)"))
-								continue;
-							else throw e;
+							continue;
 						}
 						if(changeOptional.isEmpty())
 							break;

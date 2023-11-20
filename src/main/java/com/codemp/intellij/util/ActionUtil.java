@@ -39,7 +39,9 @@ public class ActionUtil {
 
 	public static void notifyError(AnActionEvent event, String title, Throwable t) {
 		Notifications.Bus.notify(new Notification(
-			"CodeMP", title, t.getMessage(), NotificationType.ERROR
+			"CodeMP", title,
+			String.format("%s: %s", t.getClass().getCanonicalName(), t.getMessage()),
+			NotificationType.ERROR
 		), event.getProject());
 	}
 }

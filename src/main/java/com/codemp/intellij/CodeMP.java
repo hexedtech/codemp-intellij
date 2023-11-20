@@ -1,5 +1,9 @@
 package com.codemp.intellij;
 
+import com.codemp.intellij.exceptions.lib.ChannelException;
+import com.codemp.intellij.exceptions.lib.DeadlockedException;
+import com.codemp.intellij.exceptions.lib.InvalidStateException;
+import com.codemp.intellij.exceptions.lib.TransportException;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.SystemInfo;
 import cz.adamh.utils.NativeUtils;
@@ -20,7 +24,7 @@ public class CodeMP {
 	public static void loadLibrary() {
 		if(!loadedLibrary) {
 			try {
-				if(SystemInfo.isWindows) //TODO on win for some reason it bundles it twice
+				if(SystemInfo.isWindows)
 					NativeUtils.loadLibraryFromJar("/natives/codemp_intellij.dll");
 				else NativeUtils.loadLibraryFromJar("/natives/libcodemp_intellij.so");
 			} catch(IOException e) {

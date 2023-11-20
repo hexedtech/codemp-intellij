@@ -1,16 +1,13 @@
-mod error;
-
 use std::sync::Arc;
 use codemp::prelude::*;
 use rifgen::rifgen_attr::{generate_access_methods, generate_interface, generate_interface_doc};
-use crate::error::ErrorWrapper;
 
 pub mod glue { //rifgen generated code
 	include!(concat!(env!("OUT_DIR"), "/glue.rs"));
 }
 
 #[generate_interface_doc]
-struct CodeMPHandler {}
+struct CodeMPHandler;
 
 impl CodeMPHandler {
 	#[generate_interface(constructor)]
@@ -19,71 +16,59 @@ impl CodeMPHandler {
 	}
 
 	#[generate_interface]
-	fn connect(addr: String) -> Result<(), String> {
-		convert(CODEMP_INSTANCE.connect(&addr))
+	fn connect(addr: String) -> CodempResult<()> {
+		CODEMP_INSTANCE.connect(&addr)
 	}
 
 	#[generate_interface]
-	fn join(session: String) -> Result<CursorHandler, String> {
-		convert_cursor(CODEMP_INSTANCE.join(&session))
+	fn join(session: String) -> CodempResult<CursorHandler> {
+		CODEMP_INSTANCE.join(&session).map(|controller| CursorHandler { cursor: controller })
 	}
 
 	#[generate_interface]
-	fn create(path: String) -> Result<(), String> {
-		convert(CODEMP_INSTANCE.create(&path, None))
+	fn create(path: String) -> CodempResult<()> {
+		CODEMP_INSTANCE.create(&path, None)
 	}
 
 	#[generate_interface]
-	fn create_with_content(path: String, content: String) -> Result<(), String> {
-		convert(CODEMP_INSTANCE.create(&path, Some(&content)))
+	fn create_with_content(path: String, content: String) -> CodempResult<()> {
+		CODEMP_INSTANCE.create(&path, Some(&content))
 	}
 
 	#[generate_interface]
-	fn attach(path: String) -> Result<BufferHandler, String> {
-		convert_buffer(CODEMP_INSTANCE.attach(&path))
+	fn attach(path: String) -> CodempResult<BufferHandler> {
+		CODEMP_INSTANCE.attach(&path).map(|b| BufferHandler { buffer: b })
 	}
 
 	#[generate_interface]
-	fn detach(path: String) -> Result<bool, String> {
-		convert(CODEMP_INSTANCE.disconnect_buffer(&path))
+	fn detach(path: String) -> CodempResult<bool> {
+		CODEMP_INSTANCE.disconnect_buffer(&path)
 	}
 
 	#[generate_interface]
-	fn get_cursor() -> Result<CursorHandler, String> {
-		convert_cursor(CODEMP_INSTANCE.get_cursor())
+	fn get_cursor() -> CodempResult<CursorHandler> {
+		CODEMP_INSTANCE.get_cursor().map(|c| CursorHandler { cursor: c })
 	}
 
 	#[generate_interface]
-	fn get_buffer(path: String) -> Result<BufferHandler, String> {
-		convert_buffer(CODEMP_INSTANCE.get_buffer(&path))
+	fn get_buffer(path: String) -> CodempResult<BufferHandler> {
+		CODEMP_INSTANCE.get_buffer(&path).map(|b| BufferHandler { buffer: b })
 	}
 
 	#[generate_interface]
-	fn leave_workspace() -> Result<(), String> {
-		convert(CODEMP_INSTANCE.leave_workspace())
+	fn leave_workspace() -> CodempResult<()> {
+		CODEMP_INSTANCE.leave_workspace()
 	}
 
 	#[generate_interface]
-	fn disconnect_buffer(path: String) -> Result<bool, String> {
-		convert(CODEMP_INSTANCE.disconnect_buffer(&path))
+	fn disconnect_buffer(path: String) -> CodempResult<bool> {
+		CODEMP_INSTANCE.disconnect_buffer(&path)
 	}
 
 	#[generate_interface]
-	fn select_buffer() -> Result<String, String> {
-		convert(CODEMP_INSTANCE.select_buffer())
+	fn select_buffer() -> CodempResult<String> {
+		CODEMP_INSTANCE.select_buffer()
 	}
-}
-
-fn convert_buffer(result: Result<Arc<CodempBufferController>, CodempError>) -> Result<BufferHandler, String> {
-	convert(result).map(|val| BufferHandler { buffer: val })
-}
-
-fn convert_cursor(result: Result<Arc<CodempCursorController>, CodempError>) -> Result<CursorHandler, String> {
-	convert(result).map(|val| CursorHandler { cursor: val })
-}
-
-fn convert<T>(result: Result<T, CodempError>) -> Result<T, String> {
-	result.map_err(|err| ErrorWrapper::from(err).get_error_message())
 }
 
 #[generate_interface_doc]
@@ -111,9 +96,9 @@ impl CursorHandler {
 	}
 
 	#[generate_interface]
-	fn recv(&self) -> Result<CursorEventWrapper, String>  {
+	fn recv(&self) -> CodempResult<CursorEventWrapper>  {
 		match self.cursor.blocking_recv(CODEMP_INSTANCE.rt()) {
-			Err(err) => Err(ErrorWrapper::from(err).get_error_message()),
+			Err(err) => Err(err),
 			Ok(event) => Ok(CursorEventWrapper {
 				user: event.user,
 				buffer: event.position.as_ref().unwrap().buffer.clone(),
@@ -126,12 +111,12 @@ impl CursorHandler {
 	}
 
 	#[generate_interface]
-	fn send(&self, buffer: String, start_row: i32, start_col: i32, end_row: i32, end_col: i32) -> Result<(), String> {
+	fn send(&self, buffer: String, start_row: i32, start_col: i32, end_row: i32, end_col: i32) -> CodempResult<()> {
 		self.cursor.send(CodempCursorPosition {
 			buffer,
 			start: CodempRowCol::wrap(start_row, start_col),
 			end: CodempRowCol::wrap(end_row, end_col)
-		}).map_err(|err| ErrorWrapper::from(err).get_error_message())
+		})
 	}
 }
 
@@ -161,9 +146,9 @@ impl BufferHandler {
 	}
 
 	#[generate_interface]
-	fn try_recv(&self) -> Result<Option<TextChangeWrapper>, String> {
+	fn try_recv(&self) -> CodempResult<Option<TextChangeWrapper>> {
 		match self.buffer.try_recv() {
-			Err(err) => Err(ErrorWrapper::from(err).get_error_message()),
+			Err(err) => Err(err),
 			Ok(None) => Ok(None),
 			Ok(Some(change)) => Ok(Some(TextChangeWrapper {
 				start: change.span.start,
@@ -174,9 +159,9 @@ impl BufferHandler {
 	}
 
 	#[generate_interface]
-	fn recv(&self) -> Result<TextChangeWrapper, String> {
+	fn recv(&self) -> CodempResult<TextChangeWrapper> {
 		match self.buffer.blocking_recv(CODEMP_INSTANCE.rt()) {
-			Err(err) => Err(ErrorWrapper::from(err).get_error_message()),
+			Err(err) => Err(err),
 			Ok(change) => Ok(TextChangeWrapper {
 				start: change.span.start,
 				end: change.span.end,
@@ -186,8 +171,7 @@ impl BufferHandler {
 	}
 
 	#[generate_interface]
-	fn send(&self, start_offset: usize, end_offset: usize, content: String) -> Result<(), String> {
+	fn send(&self, start_offset: usize, end_offset: usize, content: String) -> CodempResult<()> {
 		self.buffer.send(CodempTextChange { span: start_offset..end_offset, content })
-			.map_err(|err| ErrorWrapper::from(err).get_error_message())
 	}
 }

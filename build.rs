@@ -1,5 +1,5 @@
 use flapigen::{JavaConfig, LanguageConfig};
-use std::{env, path::Path};
+use std::{env, fs, path::Path};
 use rifgen::{Generator as RifgenGenerator, TypeCases, Language};
 use flapigen::Generator as FlapigenGenerator;
 
@@ -7,15 +7,13 @@ fn main() {
 	let out_dir_var = env::var("OUT_DIR")
 		.expect("no OUT_DIR, but cargo should provide it");
 	let out_dir = Path::new(&out_dir_var);
+	let generated_glue_file = out_dir.join("generated_glue.in");
 
-	let mut source_folders = Vec::new();
-	source_folders.push(Path::new("src/main/rust/"));
+	let src_dir = Path::new("src/main/rust/");
+	let glue_file = src_dir.join("glue.in");
 
-	let glue_file = out_dir.join("glue.in");
-	RifgenGenerator::new(TypeCases::CamelCase,
-	                     Language::Java,
-	                     source_folders)
-		.generate_interface(&glue_file);
+	RifgenGenerator::new(TypeCases::CamelCase,Language::Java, vec!(src_dir))
+		.generate_interface(&generated_glue_file);
 
 	let jni_path = Path::new("src")
 		.join("main")
@@ -26,7 +24,7 @@ fn main() {
 		.join("jni");
 
 	//create folder if it doesn't exist
-	std::fs::create_dir_all(&jni_path)
+	fs::create_dir_all(&jni_path)
 		.expect("An error occurred while creating the JNI folder!");
 
 	let java_gen = FlapigenGenerator::new(LanguageConfig::JavaConfig(
@@ -35,14 +33,14 @@ fn main() {
 			"com.codemp.intellij.jni".into()
 		))).rustfmt_bindings(true);
 
-	java_gen.expand(
+	java_gen.expand_many(
 		"codemp-intellij",
-		&glue_file,
+		&[&generated_glue_file, &glue_file],
 		out_dir.join("glue.rs"),
 	);
 
 	println!(
 		"cargo:rerun-if-changed={}",
-		Path::new("src/main").join(&glue_file).display()
+		Path::new("src/main").join(&generated_glue_file).display()
 	);
 }
