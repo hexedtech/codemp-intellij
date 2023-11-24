@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-codemp = { git = "ssh://git@github.com/codewithotherpeopleandchangenamelater/codemp.git", branch = "woot", features = ["global", "sync"] }
+codemp = { git = "ssh://git@github.com/codewithotherpeopleandchangenamelater/codemp.git", tag = "0.5.0", features = ["global", "sync"] }
 jni = { version = "0.21.1", features = ["invocation"] }
 jni-sys = "0.3.0"
 log = "0.4.20"
