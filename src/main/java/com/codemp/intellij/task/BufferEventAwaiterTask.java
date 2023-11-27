@@ -52,7 +52,7 @@ public class BufferEventAwaiterTask extends Task.Backgroundable implements Dispo
 	@SuppressWarnings({"InfiniteLoopStatement", "UnstableApiUsage"})
 	public void run(@NotNull ProgressIndicator indicator) {
 		try {
-			Thread.sleep(1000); //tonioware
+			Thread.sleep(100); //tonioware
 		} catch(InterruptedException ex) {
 			throw new RuntimeException(ex);
 		}

@@ -1,7 +1,6 @@
 package com.codemp.intellij.task;
 
 import com.codemp.intellij.CodeMP;
-import com.codemp.intellij.exceptions.CodeMPException;
 import com.codemp.intellij.jni.CursorEventWrapper;
 import com.codemp.intellij.jni.CursorHandler;
 import com.codemp.intellij.util.ColorUtil;
