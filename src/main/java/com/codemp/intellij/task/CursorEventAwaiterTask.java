@@ -1,6 +1,7 @@
 package com.codemp.intellij.task;
 
 import com.codemp.intellij.CodeMP;
+import com.codemp.intellij.exceptions.CodeMPException;
 import com.codemp.intellij.jni.CursorEventWrapper;
 import com.codemp.intellij.jni.CursorHandler;
 import com.codemp.intellij.util.ColorUtil;
@@ -41,54 +42,48 @@ public class CursorEventAwaiterTask extends Task.Backgroundable implements Dispo
 		assert myProject != null; //will never fail
 		try {
 			while(true) {
-				try {
-					CursorEventWrapper event = handler.recv();
+				CursorEventWrapper event = handler.recv();
 
-					Editor editor = CodeMP.ACTIVE_BUFFERS.get(event.getBuffer());
-					if(editor == null)
-						continue;
+				Editor editor = CodeMP.ACTIVE_BUFFERS.get(event.getBuffer());
+				if(editor == null)
+					continue;
 
-					CodeMP.LOGGER.debug(
-						"Cursor moved by user {}! Start pos: {}x {}y; end pos: {}x {}y in buffer {}!",
-						event.getUser(),
-						event.getStartCol(), event.getStartCol(),
-						event.getEndRow(), event.getEndCol(),
-						event.getBuffer());
+				CodeMP.LOGGER.debug(
+					"Cursor moved by user {}! Start pos: {}x {}y; end pos: {}x {}y in buffer {}!",
+					event.getUser(),
+					event.getStartCol(), event.getStartCol(),
+					event.getEndRow(), event.getEndCol(),
+					event.getBuffer());
 
-					int startOffset = editor.getDocument().getLineStartOffset(event.getStartRow()) + event.getStartCol();
-					int endOffset = editor.getDocument().getLineStartOffset(event.getEndRow()) + event.getEndCol();
+				int startOffset = editor.getDocument().getLineStartOffset(event.getStartRow()) + event.getStartCol();
+				int endOffset = editor.getDocument().getLineStartOffset(event.getEndRow()) + event.getEndCol();
 
-					ApplicationManager.getApplication().invokeLater(() -> {
-						try {
-							RangeHighlighter highlighter = this.highlighterMap.get(event.getUser());
-							if(highlighter != null)
-								highlighter.dispose();
+				ApplicationManager.getApplication().invokeLater(() -> {
+					try {
+						RangeHighlighter highlighter = this.highlighterMap.get(event.getUser());
+						if(highlighter != null)
+							highlighter.dispose();
 
-							this.highlighterMap.put(event.getUser(), editor
-								.getMarkupModel()
-								.addRangeHighlighter(
-									startOffset,
-									endOffset,
-									HighlighterLayer.SELECTION,
-									new TextAttributes(
-										null,
-										ColorUtil.colorFromUsername(event.getUser()),
-										null,
-										null,
-										Font.PLAIN
-									), HighlighterTargetArea.EXACT_RANGE
-								));
-						} catch(IllegalArgumentException ex) {
-							//suppress if the cursor only exceeds length by one, it's probably just him adding something at EOF
-							if(endOffset - editor.getDocument().getTextLength() != 1)
-								throw ex;
-						} catch(Exception ex) {
-							throw new RuntimeException(ex);
-						}
-					});
-				} catch(Exception ex) {
-					throw new RuntimeException(ex);
-				}
+						this.highlighterMap.put(event.getUser(), editor
+							.getMarkupModel()
+							.addRangeHighlighter(
+								startOffset,
+								endOffset,
+								HighlighterLayer.SELECTION,
+								new TextAttributes(
+									null,
+									ColorUtil.colorFromUsername(event.getUser()),
+									null,
+									null,
+									Font.PLAIN
+								), HighlighterTargetArea.EXACT_RANGE
+							));
+					} catch(IllegalArgumentException ex) {
+						//suppress if the cursor only exceeds length by one, it's probably just him adding something at EOF
+						if(endOffset - editor.getDocument().getTextLength() != 1)
+							throw ex;
+					}
+				});
 			}
 		} catch(Exception ex) { //exited
 			this.highlighterMap.forEach((s, r) -> r.dispose());

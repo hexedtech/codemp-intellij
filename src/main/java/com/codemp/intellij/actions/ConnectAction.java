@@ -9,7 +9,7 @@ import com.intellij.openapi.ui.Messages;
 import org.jetbrains.annotations.NotNull;
 
 public class ConnectAction extends AnAction {
-	public static void connect(AnActionEvent e, String url, boolean silent) throws Exception {
+	public static void connect(AnActionEvent e, String url, boolean silent) {
 		CodeMP.loadLibrary(); //will only load it the first time
 		CodeMPHandler.connect(url);
 

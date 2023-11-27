@@ -9,7 +9,7 @@ import com.intellij.openapi.ui.Messages;
 import org.jetbrains.annotations.NotNull;
 
 public class WorkspaceLeaveAction extends AnAction {
-	public static void leave(AnActionEvent e, boolean silent) throws Exception {
+	public static void leave(AnActionEvent e, boolean silent) {
 		CodeMPHandler.leaveWorkspace();
 
 		if(!silent) ActionUtil.notify(e, "Success", "Left workspace");

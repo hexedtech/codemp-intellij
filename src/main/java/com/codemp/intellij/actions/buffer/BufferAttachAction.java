@@ -12,7 +12,7 @@ import com.intellij.openapi.ui.Messages;
 import org.jetbrains.annotations.NotNull;
 
 public class BufferAttachAction extends AnAction {
-	public static void attach(AnActionEvent e, String buffer, boolean silent) throws Exception {
+	public static void attach(AnActionEvent e, String buffer, boolean silent) {
 		BufferHandler bufferHandler = CodeMPHandler.attach(buffer);
 		if(!silent) ActionUtil.notify(e, "Success",
 			String.format("Successfully attached to buffer to buffer to %s!", buffer)

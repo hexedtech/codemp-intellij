@@ -1,9 +1,5 @@
 package com.codemp.intellij;
 
-import com.codemp.intellij.exceptions.lib.ChannelException;
-import com.codemp.intellij.exceptions.lib.DeadlockedException;
-import com.codemp.intellij.exceptions.lib.InvalidStateException;
-import com.codemp.intellij.exceptions.lib.TransportException;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.SystemInfo;
 import cz.adamh.utils.NativeUtils;
@@ -33,7 +29,6 @@ public class CodeMP {
 				LOGGER.info("Loaded CodeMP library!");
 				loadedLibrary = false;
 			}
-
 		}
 	}
 }

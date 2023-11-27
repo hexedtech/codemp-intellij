@@ -12,7 +12,7 @@ import com.intellij.openapi.ui.Messages;
 import org.jetbrains.annotations.NotNull;
 
 public class BufferDetachAction extends AnAction {
-	public static void detach(AnActionEvent e, String buffer, boolean silent) throws Exception {
+	public static void detach(AnActionEvent e, String buffer, boolean silent) {
 		boolean res = CodeMPHandler.detach(buffer);
 		if(!res) throw new BufferDetachException(buffer);
 

@@ -59,44 +59,40 @@ public class BufferEventAwaiterTask extends Task.Backgroundable implements Dispo
 
 		try {
 			while(true) {
-				try {
-					String buffer = CodeMPHandler.selectBuffer();
-					BufferHandler handler = CodeMPHandler.getBuffer(buffer);
+				String buffer = CodeMPHandler.selectBuffer();
+				BufferHandler handler = CodeMPHandler.getBuffer(buffer);
 
-					List<TextChangeWrapper> changeList = new ArrayList<>();
-					while(true) {
-						Optional<TextChangeWrapper> changeOptional;
-						try {
-							 changeOptional = handler.tryRecv();
-						} catch(DeadlockedException e) {
-							CodeMP.LOGGER.error(e.getMessage());
-							continue;
-						}
-						if(changeOptional.isEmpty())
-							break;
-						TextChangeWrapper change = changeOptional.get();
-						CodeMP.LOGGER.debug("Received text change {} from offset {} to {}!",
-							change.getContent(), change.getStart(), change.getEnd());
-						changeList.add(change);
+				List<TextChangeWrapper> changeList = new ArrayList<>();
+				while(true) {
+					Optional<TextChangeWrapper> changeOptional;
+					try {
+						 changeOptional = handler.tryRecv();
+					} catch(DeadlockedException e) {
+						CodeMP.LOGGER.error(e.getMessage());
+						continue;
 					}
-
-					Editor bufferEditor = CodeMP.ACTIVE_BUFFERS.get(buffer);
-
-					ApplicationManager.getApplication().invokeLaterOnWriteThread(() ->
-						ApplicationManager.getApplication().runWriteAction(() ->
-							CommandProcessor.getInstance().executeCommand(
-								this.myProject,
-								() -> changeList.forEach((change) ->
-									bufferEditor.getDocument().replaceString(
-										(int) change.getStart(), (int) change.getEnd(), change.getContent())
-								),
-								"CodeMPBufferReceive",
-								"codemp-buffer-receive", //TODO: mark this with the name
-								bufferEditor.getDocument()
-						)));
-				} catch(Exception ex) {
-					throw new RuntimeException(ex);
+					if(changeOptional.isEmpty())
+						break;
+					TextChangeWrapper change = changeOptional.get();
+					CodeMP.LOGGER.debug("Received text change {} from offset {} to {}!",
+						change.getContent(), change.getStart(), change.getEnd());
+					changeList.add(change);
 				}
+
+				Editor bufferEditor = CodeMP.ACTIVE_BUFFERS.get(buffer);
+
+				ApplicationManager.getApplication().invokeLaterOnWriteThread(() ->
+					ApplicationManager.getApplication().runWriteAction(() ->
+						CommandProcessor.getInstance().executeCommand(
+							this.myProject,
+							() -> changeList.forEach((change) ->
+								bufferEditor.getDocument().replaceString(
+									(int) change.getStart(), (int) change.getEnd(), change.getContent())
+							),
+							"CodeMPBufferReceive",
+							"codemp-buffer-receive", //TODO: mark this with the name
+							bufferEditor.getDocument()
+					)));
 			}
 		} catch(Exception ex) {
 			TaskManager.nullBufferTask();

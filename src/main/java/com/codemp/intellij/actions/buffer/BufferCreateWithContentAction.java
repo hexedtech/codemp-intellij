@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class BufferCreateWithContentAction extends AnAction {
 
-	public static void createWithContent(AnActionEvent event, String buffer, boolean silent) throws Exception {
+	public static void createWithContent(AnActionEvent event, String buffer, boolean silent) {
 		String content = ActionUtil.getCurrentEditor(event).getDocument().getText();
 		CodeMPHandler.createWithContent(buffer, content);
 

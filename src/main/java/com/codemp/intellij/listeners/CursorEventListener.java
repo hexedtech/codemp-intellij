@@ -22,18 +22,14 @@ public class CursorEventListener implements CaretListener {
 		if(caret == null)
 			return;
 
-		try {
-			VisualPosition startPos = caret.getSelectionStartPosition();
-			VisualPosition endPos = caret.getSelectionEndPosition();
-			CodeMP.LOGGER.debug("Caret moved from {}x {}y to {}x {}y",
-				startPos.line, startPos.column, endPos.line, endPos.column);
-			this.cursorHandler.send(
-				CodeMP.ACTIVE_BUFFERS_REVERSE.get(event.getEditor()),
-				startPos.line, startPos.column,
-				endPos.line, endPos.column
-			);
-		} catch(Exception ex) {
-			throw new RuntimeException(ex);
-		}
+		VisualPosition startPos = caret.getSelectionStartPosition();
+		VisualPosition endPos = caret.getSelectionEndPosition();
+		CodeMP.LOGGER.debug("Caret moved from {}x {}y to {}x {}y",
+			startPos.line, startPos.column, endPos.line, endPos.column);
+		this.cursorHandler.send(
+			CodeMP.ACTIVE_BUFFERS_REVERSE.get(event.getEditor()),
+			startPos.line, startPos.column,
+			endPos.line, endPos.column
+		);
 	}
 }

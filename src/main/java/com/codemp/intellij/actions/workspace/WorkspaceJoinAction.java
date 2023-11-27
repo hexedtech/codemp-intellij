@@ -14,7 +14,7 @@ import com.intellij.openapi.ui.Messages;
 import org.jetbrains.annotations.NotNull;
 
 public class WorkspaceJoinAction extends AnAction {
-	public static void join(AnActionEvent e, String workspace, boolean silent) throws Exception {
+	public static void join(AnActionEvent e, String workspace, boolean silent) {
 		CursorHandler cursorHandler = CodeMPHandler.join(workspace);
 
 		if(!silent) ActionUtil.notify(e,

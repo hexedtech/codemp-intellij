@@ -9,7 +9,7 @@ import com.intellij.openapi.ui.Messages;
 import org.jetbrains.annotations.NotNull;
 
 public class BufferCreateAction extends AnAction {
-	public static void create(AnActionEvent e, String buffer, boolean silent) throws Exception {
+	public static void create(AnActionEvent e, String buffer, boolean silent) {
 		CodeMPHandler.create(buffer);
 		if(!silent) ActionUtil.notify(e, "Success",
 			String.format("Created buffer %s!", buffer)
