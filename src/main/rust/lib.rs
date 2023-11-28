@@ -1,5 +1,7 @@
 use std::sync::Arc;
+use std::time::Duration;
 use codemp::prelude::*;
+use codemp::tools;
 use rifgen::rifgen_attr::{generate_access_methods, generate_interface, generate_interface_doc};
 
 pub mod glue { //rifgen generated code
@@ -66,8 +68,16 @@ impl CodeMPHandler {
 	}
 
 	#[generate_interface]
-	fn select_buffer() -> CodempResult<String> {
-		CODEMP_INSTANCE.select_buffer()
+	fn select_buffer(mut buffer_ids: StringVec, timeout: i64) -> CodempResult<Option<String>> {
+		let mut buffers = Vec::new();
+		for id in buffer_ids.v.iter_mut() {
+			match CODEMP_INSTANCE.get_buffer(id.as_str()) {
+				Ok(buf) => buffers.push(buf),
+				Err(_) => continue
+			}
+		}
+		CODEMP_INSTANCE.rt().block_on(
+			tools::select_buffer_timeout(&buffers, Duration::from_millis(timeout as u64)))
 	}
 }
 
@@ -92,7 +102,7 @@ struct CursorHandler {
 impl CursorHandler {
 	#[generate_interface(constructor)]
 	fn new() -> CursorHandler {
-		panic!("Default constructor for CursorHandler should never be called!")
+		unimplemented!()
 	}
 
 	#[generate_interface]
@@ -137,12 +147,17 @@ struct BufferHandler {
 impl BufferHandler {
 	#[generate_interface(constructor)]
 	fn new() -> BufferHandler {
-		panic!("Default constructor for BufferHandler should never be called!")
+		unimplemented!()
 	}
 
 	#[generate_interface]
 	fn get_name(&self) -> String {
 		self.buffer.name.clone()
+	}
+
+	#[generate_interface]
+	fn get_content(&self) -> String {
+		self.buffer.content()
 	}
 
 	#[generate_interface]
@@ -173,5 +188,22 @@ impl BufferHandler {
 	#[generate_interface]
 	fn send(&self, start_offset: usize, end_offset: usize, content: String) -> CodempResult<()> {
 		self.buffer.send(CodempTextChange { span: start_offset..end_offset, content })
+	}
+}
+
+#[generate_interface_doc]
+struct StringVec { //jni moment
+	v: Vec<String>
+}
+
+impl StringVec {
+	#[generate_interface(constructor)]
+	fn new() -> StringVec {
+		Self { v: Vec::new() }
+	}
+
+	#[generate_interface]
+	fn push(&mut self, s: String) {
+		self.v.push(s);
 	}
 }

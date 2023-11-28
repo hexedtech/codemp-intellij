@@ -69,11 +69,7 @@ public class CursorEventAwaiterTask extends Task.Backgroundable implements Dispo
 							return;
 						}
 
-						RangeHighlighter highlighter = this.highlighterMap.get(event.getUser());
-						if(highlighter != null)
-							highlighter.dispose();
-
-						this.highlighterMap.put(event.getUser(), editor
+						RangeHighlighter previous = this.highlighterMap.put(event.getUser(), editor
 							.getMarkupModel()
 							.addRangeHighlighter(
 								startOffset,
@@ -87,6 +83,9 @@ public class CursorEventAwaiterTask extends Task.Backgroundable implements Dispo
 									Font.PLAIN
 								), HighlighterTargetArea.EXACT_RANGE
 							));
+
+						if(previous != null)
+							previous.dispose();
 					});
 				} catch(IndexOutOfBoundsException ignored) {}
 			}

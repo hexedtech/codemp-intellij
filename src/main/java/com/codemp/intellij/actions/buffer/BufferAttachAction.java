@@ -15,8 +15,7 @@ public class BufferAttachAction extends AnAction {
 	public static void attach(AnActionEvent e, String buffer, boolean silent) {
 		BufferHandler bufferHandler = CodeMPHandler.attach(buffer);
 		if(!silent) ActionUtil.notify(e, "Success",
-			String.format("Successfully attached to buffer to buffer to %s!", buffer)
-		);
+			String.format("Successfully attached to buffer to buffer to %s!", buffer));
 		CodeMP.LOGGER.debug("Attached to buffer to {}!", buffer);
 
 		//TODO "get" the Editor corresponding to buffer, for now use the current one

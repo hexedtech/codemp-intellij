@@ -5,6 +5,7 @@ import com.codemp.intellij.exceptions.lib.ChannelException;
 import com.codemp.intellij.exceptions.lib.DeadlockedException;
 import com.codemp.intellij.jni.BufferHandler;
 import com.codemp.intellij.jni.CodeMPHandler;
+import com.codemp.intellij.jni.StringVec;
 import com.codemp.intellij.jni.TextChangeWrapper;
 import com.codemp.intellij.listeners.BufferEventListener;
 import com.intellij.openapi.Disposable;
@@ -22,6 +23,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class BufferEventAwaiterTask extends Task.Backgroundable implements Disposable {
 	private final Map<String, Disposable> bufferListeners = new ConcurrentHashMap<>();
+	private final Set<String> initialisedBuffers = Collections.newSetFromMap(new ConcurrentHashMap<>()); //also tonioware
 
 	public BufferEventAwaiterTask(@NotNull Project project) {
 		super(project, "Awaiting CodeMP buffer events", false);
@@ -41,6 +43,8 @@ public class BufferEventAwaiterTask extends Task.Backgroundable implements Dispo
 	}
 
 	public void unregisterListener(String name) {
+		CodeMP.ACTIVE_BUFFERS_REVERSE.remove(CodeMP.ACTIVE_BUFFERS.remove(name));
+		this.initialisedBuffers.remove(name);
 		Disposable listener = this.bufferListeners.remove(name);
 		if(listener != null)
 			listener.dispose();
@@ -50,17 +54,25 @@ public class BufferEventAwaiterTask extends Task.Backgroundable implements Dispo
 	public void dispose() {}
 
 	@Override
-	@SuppressWarnings({"InfiniteLoopStatement", "UnstableApiUsage"})
+	@SuppressWarnings({"InfiniteLoopStatement", "UnstableApiUsage", "BusyWait"})
 	public void run(@NotNull ProgressIndicator indicator) {
 		try {
-			Thread.sleep(100); //tonioware
-		} catch(InterruptedException ex) {
-			throw new RuntimeException(ex);
-		}
-
-		try {
 			while(true) {
-				String buffer = CodeMPHandler.selectBuffer();
+				StringVec buffers = new StringVec(); //jni moment
+				CodeMP.ACTIVE_BUFFERS.keySet().forEach(buffers::push);
+
+				Optional<String> bufferOptional = CodeMPHandler.selectBuffer(buffers, 100L);
+				if(bufferOptional.isEmpty())
+					continue;
+				String buffer = bufferOptional.get();
+
+				if(!this.initialisedBuffers.contains(buffer)) { //tonioware
+					try {
+							Thread.sleep(100);
+					} catch(InterruptedException ignored) {}
+					this.initialisedBuffers.add(buffer);
+				}
+
 				BufferHandler handler = CodeMPHandler.getBuffer(buffer);
 
 				List<TextChangeWrapper> changeList = new ArrayList<>();
@@ -81,7 +93,6 @@ public class BufferEventAwaiterTask extends Task.Backgroundable implements Dispo
 				}
 
 				Editor bufferEditor = CodeMP.ACTIVE_BUFFERS.get(buffer);
-
 				ApplicationManager.getApplication().invokeLaterOnWriteThread(() ->
 					ApplicationManager.getApplication().runWriteAction(() ->
 						CommandProcessor.getInstance().executeCommand(

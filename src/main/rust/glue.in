@@ -35,6 +35,5 @@ foreign_typemap!( //thanks @tasn on GitHub for the idea
             }
         };
     };
-    ($p:f_type, unique_prefix="/*codemp::prelude::CodempResult<swig_subst_type!(T)>*/") => "/*codemp::prelude::CodempResult<swig_subst_type!(T)>*/swig_f_type!(T)"
-        "swig_foreign_from_i_type!(T, $p)";
+    ($p:f_type, unique_prefix="/*err*/") => "/*err*/swig_f_type!(T)" "swig_foreign_from_i_type!(T, $p)";
 );
