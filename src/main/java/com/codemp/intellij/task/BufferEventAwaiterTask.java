@@ -1,6 +1,7 @@
 package com.codemp.intellij.task;
 
 import com.codemp.intellij.CodeMP;
+import com.codemp.intellij.exceptions.lib.ChannelException;
 import com.codemp.intellij.exceptions.lib.DeadlockedException;
 import com.codemp.intellij.jni.BufferHandler;
 import com.codemp.intellij.jni.CodeMPHandler;
@@ -94,7 +95,7 @@ public class BufferEventAwaiterTask extends Task.Backgroundable implements Dispo
 							bufferEditor.getDocument()
 					)));
 			}
-		} catch(Exception ex) {
+		} catch(ChannelException ex) { //exited
 			TaskManager.nullBufferTask();
 			Disposer.dispose(this); //stopped
 		}

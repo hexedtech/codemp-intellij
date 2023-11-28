@@ -1,6 +1,7 @@
 package com.codemp.intellij.task;
 
 import com.codemp.intellij.CodeMP;
+import com.codemp.intellij.exceptions.lib.ChannelException;
 import com.codemp.intellij.jni.CursorEventWrapper;
 import com.codemp.intellij.jni.CursorHandler;
 import com.codemp.intellij.util.ColorUtil;
@@ -42,7 +43,6 @@ public class CursorEventAwaiterTask extends Task.Backgroundable implements Dispo
 		try {
 			while(true) {
 				CursorEventWrapper event = handler.recv();
-
 				Editor editor = CodeMP.ACTIVE_BUFFERS.get(event.getBuffer());
 				if(editor == null)
 					continue;
@@ -54,11 +54,21 @@ public class CursorEventAwaiterTask extends Task.Backgroundable implements Dispo
 					event.getEndRow(), event.getEndCol(),
 					event.getBuffer());
 
-				int startOffset = editor.getDocument().getLineStartOffset(event.getStartRow()) + event.getStartCol();
-				int endOffset = editor.getDocument().getLineStartOffset(event.getEndRow()) + event.getEndCol();
+				try {
+					int startOffset = editor.getDocument()
+						.getLineStartOffset(event.getStartRow()) + event.getStartCol();
+					int endOffset = editor.getDocument()
+						.getLineStartOffset(event.getEndRow()) + event.getEndCol();
 
-				ApplicationManager.getApplication().invokeLater(() -> {
-					try {
+					ApplicationManager.getApplication().invokeLater(() -> {
+						int documentLength = editor.getDocument().getTextLength();
+						if(startOffset > documentLength || endOffset > documentLength) {
+							CodeMP.LOGGER.debug(
+								"Out of bounds cursor: start was {}, end was {}, document length was {}!",
+								startOffset, endOffset, documentLength);
+							return;
+						}
+
 						RangeHighlighter highlighter = this.highlighterMap.get(event.getUser());
 						if(highlighter != null)
 							highlighter.dispose();
@@ -77,14 +87,10 @@ public class CursorEventAwaiterTask extends Task.Backgroundable implements Dispo
 									Font.PLAIN
 								), HighlighterTargetArea.EXACT_RANGE
 							));
-					} catch(IllegalArgumentException ex) {
-						//suppress if the cursor only exceeds length by one, it's probably just him adding something at EOF
-						if(endOffset - editor.getDocument().getTextLength() != 1)
-							throw ex;
-					}
-				});
+					});
+				} catch(IndexOutOfBoundsException ignored) {}
 			}
-		} catch(Exception ex) { //exited
+		} catch(ChannelException ex) { //exited
 			this.highlighterMap.forEach((s, r) -> r.dispose());
 			TaskManager.nullCursorTask();
 			Disposer.dispose(this);
