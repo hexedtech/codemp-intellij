@@ -23,7 +23,6 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class BufferEventAwaiterTask extends Task.Backgroundable implements Disposable {
 	private final Map<String, Disposable> bufferListeners = new ConcurrentHashMap<>();
-	private final Set<String> initialisedBuffers = Collections.newSetFromMap(new ConcurrentHashMap<>()); //also tonioware
 
 	public BufferEventAwaiterTask(@NotNull Project project) {
 		super(project, "Awaiting CodeMP buffer events", false);
@@ -44,7 +43,6 @@ public class BufferEventAwaiterTask extends Task.Backgroundable implements Dispo
 
 	public void unregisterListener(String name) {
 		CodeMP.ACTIVE_BUFFERS_REVERSE.remove(CodeMP.ACTIVE_BUFFERS.remove(name));
-		this.initialisedBuffers.remove(name);
 		Disposable listener = this.bufferListeners.remove(name);
 		if(listener != null)
 			listener.dispose();
@@ -54,7 +52,7 @@ public class BufferEventAwaiterTask extends Task.Backgroundable implements Dispo
 	public void dispose() {}
 
 	@Override
-	@SuppressWarnings({"InfiniteLoopStatement", "UnstableApiUsage", "BusyWait"})
+	@SuppressWarnings({"InfiniteLoopStatement", "UnstableApiUsage"})
 	public void run(@NotNull ProgressIndicator indicator) {
 		try {
 			while(true) {
@@ -65,13 +63,6 @@ public class BufferEventAwaiterTask extends Task.Backgroundable implements Dispo
 				if(bufferOptional.isEmpty())
 					continue;
 				String buffer = bufferOptional.get();
-
-				if(!this.initialisedBuffers.contains(buffer)) { //tonioware
-					try {
-							Thread.sleep(100);
-					} catch(InterruptedException ignored) {}
-					this.initialisedBuffers.add(buffer);
-				}
 
 				BufferHandler handler = CodeMPHandler.getBuffer(buffer);
 
