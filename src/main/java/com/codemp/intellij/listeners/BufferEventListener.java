@@ -22,8 +22,9 @@ public class BufferEventListener implements DocumentListener {
 			event.getOldFragment(), event.getNewFragment(), event.getOffset());
 
 		Object group = CommandProcessor.getInstance().getCurrentCommandGroupId();
-		if(group instanceof String groupString && groupString.startsWith("codemp-buffer-receive"))
-			return;
+		if(group instanceof String groupString)
+			if(groupString.startsWith("codemp-buffer-receive") || groupString.startsWith("codemp-buffer-sync"))
+				return;
 
 		//TODO move actions break
 		int changeOffset = event.getOffset();

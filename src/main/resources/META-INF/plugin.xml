@@ -27,6 +27,8 @@
 						text="Create Buffer with Content"/>
 				<action id="codemp.buffer.attach" class="com.codemp.intellij.actions.buffer.BufferAttachAction"
 						text="Attach to Buffer"/>
+				<action id="codemp.buffer.sync" class="com.codemp.intellij.actions.buffer.BufferSyncAction"
+						text="Force Sync Buffer"/>
 				<action id="codemp.buffer.detach" class="com.codemp.intellij.actions.buffer.BufferDetachAction"
 						text="Detach from Buffer"/>
 			</group>

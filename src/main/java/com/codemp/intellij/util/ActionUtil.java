@@ -1,5 +1,6 @@
 package com.codemp.intellij.util;
 
+import com.codemp.intellij.CodeMP;
 import com.codemp.intellij.exceptions.ide.BadActionEventStateException;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
@@ -43,5 +44,6 @@ public class ActionUtil {
 			String.format("%s: %s", t.getClass().getCanonicalName(), t.getMessage()),
 			NotificationType.ERROR
 		), event.getProject());
+		CodeMP.LOGGER.error(title, t);
 	}
 }
