@@ -59,18 +59,16 @@ public class BufferEventAwaiterTask extends Task.Backgroundable implements Dispo
 				StringVec buffers = new StringVec(); //jni moment
 				CodeMP.ACTIVE_BUFFERS.keySet().forEach(buffers::push);
 
-				Optional<String> bufferOptional = CodeMPHandler.selectBuffer(buffers, 100L);
+				Optional<BufferHandler> bufferOptional = CodeMPHandler.selectBuffer(buffers, 100L);
 				if(bufferOptional.isEmpty())
 					continue;
-				String buffer = bufferOptional.get();
-
-				BufferHandler handler = CodeMPHandler.getBuffer(buffer);
+				BufferHandler buffer = bufferOptional.get();
 
 				List<TextChangeWrapper> changeList = new ArrayList<>();
 				while(true) {
 					Optional<TextChangeWrapper> changeOptional;
 					try {
-						 changeOptional = handler.tryRecv();
+						 changeOptional = buffer.tryRecv();
 					} catch(DeadlockedException e) {
 						CodeMP.LOGGER.error(e.getMessage());
 						continue;
@@ -83,7 +81,7 @@ public class BufferEventAwaiterTask extends Task.Backgroundable implements Dispo
 					changeList.add(change);
 				}
 
-				Editor bufferEditor = CodeMP.ACTIVE_BUFFERS.get(buffer);
+				Editor bufferEditor = CodeMP.ACTIVE_BUFFERS.get(buffer.getName());
 				ApplicationManager.getApplication().invokeLaterOnWriteThread(() ->
 					ApplicationManager.getApplication().runWriteAction(() ->
 						CommandProcessor.getInstance().executeCommand(

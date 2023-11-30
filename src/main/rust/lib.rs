@@ -1,6 +1,7 @@
 use std::sync::Arc;
 use std::time::Duration;
 use codemp::prelude::*;
+use codemp::tools;
 use rifgen::rifgen_attr::{generate_access_methods, generate_interface, generate_interface_doc};
 
 pub mod glue { //rifgen generated code
@@ -67,7 +68,7 @@ impl CodeMPHandler {
 	}
 
 	#[generate_interface]
-	fn select_buffer(mut buffer_ids: StringVec, timeout: i64) -> CodempResult<Option<String>> {
+	fn select_buffer(mut buffer_ids: StringVec, timeout: i64) -> CodempResult<Option<BufferHandler>> {
 		let mut buffers = Vec::new();
 		for id in buffer_ids.v.iter_mut() {
 			match CODEMP_INSTANCE.get_buffer(id.as_str()) {
@@ -76,35 +77,15 @@ impl CodeMPHandler {
 			}
 		}
 
-		let (tx, mut rx) = tokio::sync::mpsc::unbounded_channel();
-		let mut tasks = Vec::new();
-		for buffer in buffers {
-			let _tx = tx.clone();
-			let _buffer = buffer.clone();
-			tasks.push(CODEMP_INSTANCE.rt().spawn(async move {
-				match _buffer.poll().await {
-					Ok(()) => _tx.send(Ok(Some(_buffer.name.clone()))),
-					Err(_) => _tx.send(Err(CodempError::Channel { send: true })),
-				}
-			}))
-		}
-		let _tx = tx.clone();
-		tasks.push(CODEMP_INSTANCE.rt().spawn(async move {
-			tokio::time::sleep(Duration::from_millis(timeout as u64)).await;
-			_tx.send(Ok(None))
-		}));
-		loop {
-			match CODEMP_INSTANCE.rt().block_on(rx.recv()) {
-				None => return Err(CodempError::Channel { send: false }),
-				Some(Err(_)) => continue,
-				Some(Ok(None)) => return Ok(None),
-				Some(Ok(Some(x))) => {
-					for t in tasks {
-						t.abort();
-					}
-					return Ok(Some(x.clone()));
-				},
-			}
+		let result = CODEMP_INSTANCE.rt().block_on(tools::select_buffer(
+			buffers.as_slice(),
+			Some(Duration::from_millis(timeout as u64))
+		));
+
+		match result {
+			Err(e) => Err(e),
+			Ok(buffer) =>
+				Ok(buffer.map(|buffer| BufferHandler { buffer }))
 		}
 	}
 }
@@ -180,7 +161,7 @@ impl BufferHandler {
 
 	#[generate_interface]
 	fn get_name(&self) -> String {
-		self.buffer.name.clone()
+		self.buffer.name().to_string()
 	}
 
 	#[generate_interface]
