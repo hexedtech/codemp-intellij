@@ -1,11 +1,11 @@
 foreign_typemap!( //thanks @tasn on GitHub for the idea
-    ($p:r_type) <T> CodempResult<T> => swig_i_type!(T) {
-        $out = match $p {
-            Ok(x) => {
-                swig_from_rust_to_i_type!(T, x, ret)
-                ret
-            }
-            Err(err) => {
+	($p:r_type) <T> CodempResult<T> => swig_i_type!(T) {
+		$out = match $p {
+			Ok(x) => {
+				swig_from_rust_to_i_type!(T, x, ret)
+				ret
+			}
+			Err(err) => {
 				let (msg, exception_class) = match err {
 					CodempError::Filler { message } => (
 						message,
@@ -32,8 +32,8 @@ foreign_typemap!( //thanks @tasn on GitHub for the idea
 				};
 				jni_throw(env, exception_class, &msg);
 				return <swig_i_type!(T)>::jni_invalid_value();
-            }
-        };
-    };
-    ($p:f_type, unique_prefix="/*err*/") => "/*err*/swig_f_type!(T)" "swig_foreign_from_i_type!(T, $p)";
+			}
+		};
+	};
+	($p:f_type, unique_prefix="/*err*/") => "/*err*/swig_f_type!(T)" "swig_foreign_from_i_type!(T, $p)";
 );

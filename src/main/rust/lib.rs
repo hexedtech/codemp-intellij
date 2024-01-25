@@ -1,83 +1,144 @@
 use std::sync::Arc;
+use tokio::sync::RwLock;
 use std::time::Duration;
 use codemp::prelude::*;
 use codemp::tools;
+use lazy_static::lazy_static;
 use rifgen::rifgen_attr::{generate_access_methods, generate_interface, generate_interface_doc};
+use uuid::Uuid;
 
 pub mod glue { //rifgen generated code
 	include!(concat!(env!("OUT_DIR"), "/glue.rs"));
 }
 
+lazy_static! {
+	/// the tokio runtime, since we can't easily have Java and Rust async work together
+	static ref RT: tokio::runtime::Runtime = tokio::runtime::Runtime::new()
+		.expect("could not start tokio runtime");
+}
+
 #[generate_interface_doc]
-struct CodeMPHandler;
+/// the handler class that represent an instance of a CodeMP client
+struct CodeMPHandler {
+	client: CodempClient
+}
 
 impl CodeMPHandler {
 	#[generate_interface(constructor)]
-	fn new() -> CodeMPHandler {
-		CodeMPHandler {}
+	/// constructor required by flapigen, DO NOT CALL THIS
+	fn new(address: &str) -> CodeMPHandler {
+		CodeMPHandler {
+			client: RT.block_on(CodempClient::new(address)).unwrap()
+		}
 	}
 
 	#[generate_interface]
-	fn connect(addr: String) -> CodempResult<()> {
-		CODEMP_INSTANCE.connect(&addr)
+	/// create a new workspcae
+	fn create_workspace(&mut self, workspace_id: &str) -> CodempResult<WorkspaceHandler> {
+		RT.block_on(self.client.create_workspace(workspace_id))
+			.map(|workspace| WorkspaceHandler { workspace })
 	}
 
 	#[generate_interface]
-	fn join(session: String) -> CodempResult<CursorHandler> {
-		CODEMP_INSTANCE.join(&session).map(|controller| CursorHandler { cursor: controller })
+	/// join a workspace by name
+	fn join_workspace(&mut self, workspace_id: &str) -> CodempResult<WorkspaceHandler> {
+		RT.block_on(self.client.join_workspace(workspace_id))
+			.map(|workspace| WorkspaceHandler { workspace })
 	}
 
 	#[generate_interface]
-	fn create(path: String) -> CodempResult<()> {
-		CODEMP_INSTANCE.create(&path, None)
+	/// leave a workspace
+	fn leave_workspace(&mut self, workspace_id: &str) -> CodempResult<()> {
+		RT.block_on(self.client.leave_workspace(workspace_id))
+	}
+}
+
+#[generate_interface_doc]
+/// wraps a [codemp::workspace::Workspace] to be handled by Java
+struct WorkspaceHandler {
+	workspace: Arc<RwLock<CodempWorkspace>>
+}
+
+impl WorkspaceHandler {
+	#[generate_interface(constructor)]
+	/// constructor required by flapigen, DO NOT CALL THIS
+	fn new() -> WorkspaceHandler {
+		unimplemented!()
 	}
 
 	#[generate_interface]
-	fn create_with_content(path: String, content: String) -> CodempResult<()> {
-		CODEMP_INSTANCE.create(&path, Some(&content))
+	/// create a new buffer in current workspace
+	fn create_buffer(&mut self, path: &str) -> CodempResult<Option<BufferHandler>> {
+		RT.block_on(RT.block_on(self.workspace.write()).create(path))?;
+		Ok(self.get_buffer(path))
 	}
 
 	#[generate_interface]
-	fn attach(path: String) -> CodempResult<BufferHandler> {
-		CODEMP_INSTANCE.attach(&path).map(|b| BufferHandler { buffer: b })
+	/// attach to a buffer and get a [crate::BufferHandler] for it
+	fn attach_buffer(&mut self, path: &str) -> CodempResult<BufferHandler> {
+		RT.block_on(RT.block_on(self.workspace.write()).attach(path))
+			.map(|buffer| BufferHandler { buffer })
 	}
 
 	#[generate_interface]
-	fn detach(path: String) -> CodempResult<bool> {
-		CODEMP_INSTANCE.disconnect_buffer(&path)
+	/// updates the local list of the workspace's buffers
+	fn fetch_buffers(&mut self) -> CodempResult<()> {
+		RT.block_on(RT.block_on(self.workspace.write()).fetch_buffers())
 	}
 
 	#[generate_interface]
-	fn get_cursor() -> CodempResult<CursorHandler> {
-		CODEMP_INSTANCE.get_cursor().map(|c| CursorHandler { cursor: c })
+	/// updates the local list of the workspace's users
+	fn fetch_users(&mut self) -> CodempResult<()> {
+		RT.block_on(RT.block_on(self.workspace.write()).fetch_users())
 	}
 
 	#[generate_interface]
-	fn get_buffer(path: String) -> CodempResult<BufferHandler> {
-		CODEMP_INSTANCE.get_buffer(&path).map(|b| BufferHandler { buffer: b })
+	/// gets a list of all users in a buffer
+	fn list_buffer_users(&mut self, path: &str) -> CodempResult<StringVec> {
+		let mut res = StringVec::new();
+		RT.block_on(RT.block_on(self.workspace.write())
+			.list_buffer_users(path))?
+			.iter().for_each(|u| res.push(Uuid::from(u.clone()).to_string()));
+		Ok(res)
 	}
 
 	#[generate_interface]
-	fn leave_workspace() -> CodempResult<()> {
-		CODEMP_INSTANCE.leave_workspace()
+	/// delete a buffer
+	fn delete_buffer(&mut self, path: &str) -> CodempResult<()> {
+		RT.block_on(RT.block_on(self.workspace.write()).delete(path))
 	}
 
 	#[generate_interface]
-	fn disconnect_buffer(path: String) -> CodempResult<bool> {
-		CODEMP_INSTANCE.disconnect_buffer(&path)
+	/// detach from a buffer
+	fn detach_buffer(&mut self, path: &str) -> bool {
+		RT.block_on(self.workspace.write()).detach(path)
 	}
 
 	#[generate_interface]
-	fn select_buffer(mut buffer_ids: StringVec, timeout: i64) -> CodempResult<Option<BufferHandler>> {
+	/// get a [crate::CursorHandler] for the workspace's cursor
+	fn get_cursor(&mut self) -> CursorHandler {
+		CursorHandler { cursor: RT.block_on(self.workspace.read()).cursor().clone() }
+	}
+
+	#[generate_interface]
+	/// get a [crate::BufferHandler] for one of the workspace's buffers
+	fn get_buffer(&mut self, path: &str) -> Option<BufferHandler> {
+		RT.block_on(self.workspace.read()).buffer_by_name(path)
+			.map(|b| BufferHandler { buffer: b })
+	}
+
+	#[generate_interface]
+	/// polls a list of buffers, returning the first ready one
+	fn select_buffer(&mut self, mut buffer_ids: StringVec, timeout: i64) -> CodempResult<Option<BufferHandler>> {
 		let mut buffers = Vec::new();
 		for id in buffer_ids.v.iter_mut() {
-			match CODEMP_INSTANCE.get_buffer(id.as_str()) {
-				Ok(buf) => buffers.push(buf),
-				Err(_) => continue
+			match self.get_buffer(id.as_str()) {
+				Some(buf) => buffers.push(buf.buffer),
+				None => continue
 			}
 		}
 
-		let result = CODEMP_INSTANCE.rt().block_on(tools::select_buffer(
+		let result = RT.block_on(tools::select_buffer(
 			buffers.as_slice(),
 			Some(Duration::from_millis(timeout as u64))
 		));
@@ -92,6 +153,7 @@ impl CodeMPHandler {
 
 #[generate_interface_doc]
 #[generate_access_methods]
+/// wraps a [codemp::proto::cursor::CursorEvent] to be handled by Java
 struct CursorEventWrapper {
 	user: String,
 	buffer: String,
@@ -103,44 +165,49 @@ struct CursorEventWrapper {
 
 
 #[generate_interface_doc]
+/// a handler providing Java access to [codemp::cursor::Controller] methods
 struct CursorHandler {
-	#[allow(unused)]
-	cursor: Arc<CodempCursorController>
+	pub cursor: Arc<CodempCursorController>
 }
 
 impl CursorHandler {
 	#[generate_interface(constructor)]
+	/// constructor required by flapigen, DO NOT CALL THIS
 	fn new() -> CursorHandler {
 		unimplemented!()
 	}
 
 	#[generate_interface]
+	/// get next cursor event from current workspace, or block until one is available
 	fn recv(&self) -> CodempResult<CursorEventWrapper>  {
-		match self.cursor.blocking_recv(CODEMP_INSTANCE.rt()) {
+		match RT.block_on(self.cursor.recv()) {
 			Err(err) => Err(err),
 			Ok(event) => Ok(CursorEventWrapper {
-				user: event.user,
-				buffer: event.position.as_ref().unwrap().buffer.clone(),
-				start_row: event.position.as_ref().unwrap().start().row,
-				start_col: event.position.as_ref().unwrap().start().col,
-				end_row: event.position.as_ref().unwrap().end().row,
-				end_col: event.position.as_ref().unwrap().end().col
+				user: Uuid::from(event.user).to_string(),
+				buffer: event.position.buffer.clone(),
+				start_row: event.position.start.row,
+				start_col: event.position.start.col,
+				end_row: event.position.end.row,
+				end_col: event.position.end.col
 			})
 		}
 	}
 
 	#[generate_interface]
+	/// broadcast a cursor event
+	/// will automatically fix start and end if they are accidentally inverted
 	fn send(&self, buffer: String, start_row: i32, start_col: i32, end_row: i32, end_col: i32) -> CodempResult<()> {
 		self.cursor.send(CodempCursorPosition {
 			buffer,
-			start: CodempRowCol::wrap(start_row, start_col),
-			end: CodempRowCol::wrap(end_row, end_col)
+			start: CodempRowCol::from((start_row, start_col)),
+			end: CodempRowCol::from((end_row, end_col))
 		})
 	}
 }
 
 #[generate_interface_doc]
 #[generate_access_methods]
+/// wraps a [codemp::api::change::TextChange] to make it accessible from Java
 struct TextChangeWrapper {
 	start: usize,
 	end: usize, //not inclusive
@@ -148,28 +215,32 @@ struct TextChangeWrapper {
 }
 
 #[generate_interface_doc]
+/// a handler providing Java access to [codemp::buffer::Controller] methods
 struct BufferHandler {
-	#[allow(unused)]
-	buffer: Arc<CodempBufferController>
+	pub buffer: Arc<CodempBufferController>
 }
 
 impl BufferHandler {
 	#[generate_interface(constructor)]
+	/// constructor required by flapigen, DO NOT CALL THIS
 	fn new() -> BufferHandler {
 		unimplemented!()
 	}
 
 	#[generate_interface]
+	/// get the name of the buffer
 	fn get_name(&self) -> String {
 		self.buffer.name().to_string()
 	}
 
 	#[generate_interface]
+	/// get the contents of the buffer
 	fn get_content(&self) -> String {
 		self.buffer.content()
 	}
 
 	#[generate_interface]
+	/// if a text change is available on the buffer, return it immediately
 	fn try_recv(&self) -> CodempResult<Option<TextChangeWrapper>> {
 		match self.buffer.try_recv() {
 			Err(err) => Err(err),
@@ -183,35 +254,27 @@ impl BufferHandler {
 	}
 
 	#[generate_interface]
-	fn recv(&self) -> CodempResult<TextChangeWrapper> {
-		match self.buffer.blocking_recv(CODEMP_INSTANCE.rt()) {
-			Err(err) => Err(err),
-			Ok(change) => Ok(TextChangeWrapper {
-				start: change.span.start,
-				end: change.span.end,
-				content: change.content.clone()
-			})
-		}
-	}
-
-	#[generate_interface]
+	/// broadcast a text change on the buffer
 	fn send(&self, start_offset: usize, end_offset: usize, content: String) -> CodempResult<()> {
 		self.buffer.send(CodempTextChange { span: start_offset..end_offset, content })
 	}
 }
 
 #[generate_interface_doc]
+/// a convenience struct allowing Java access to a Rust vector
 struct StringVec { //jni moment
 	v: Vec<String>
 }
 
 impl StringVec {
 	#[generate_interface(constructor)]
+	/// initializes an empty vector
 	fn new() -> StringVec {
 		Self { v: Vec::new() }
 	}
 
 	#[generate_interface]
+	/// pushes a new value onto the vector
 	fn push(&mut self, s: String) {
 		self.v.push(s);
 	}
