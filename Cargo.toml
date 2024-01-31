@@ -4,7 +4,8 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-codemp = { git = "ssh://git@github.com/codewithotherpeopleandchangenamelater/codemp.git", branch = "workspace", features = ["global", "sync"] }
+codemp = { path = "../../lib", features = ["global", "sync", "transport"] }
+#codemp = { git = "ssh://git@github.com/codewithotherpeopleandchangenamelater/codemp.git", branch = "workspace", features = ["global", "sync"] }
 jni = { version = "0.21.1", features = ["invocation"] }
 jni-sys = "0.3.0"
 lazy_static = "1.4.0"

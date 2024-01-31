@@ -1,15 +1,12 @@
 package com.codemp.intellij.actions.buffer;
 
 import com.codemp.intellij.CodeMP;
-import com.codemp.intellij.jni.CodeMPHandler;
-import com.codemp.intellij.task.TaskManager;
 import com.codemp.intellij.util.ActionUtil;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.ui.Messages;
 import org.jetbrains.annotations.NotNull;
 
 public class BufferSyncAction extends AnAction {

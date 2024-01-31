@@ -19,11 +19,11 @@ repositories {
 dependencies {
 	implementation 'com.github.adamheinrich:native-utils:master-SNAPSHOT'
 	implementation 'org.slf4j:slf4j-api:2.0.9'
-	implementation 'ch.qos.logback:logback-classic:1.4.6'
+	implementation 'ch.qos.logback:logback-classic:1.4.12'
 }
 
 intellij {
-	version.set('2022.2.5')
+	version.set('2023.3')
 	type.set('IC')
 }
 

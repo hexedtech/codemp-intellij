@@ -2,9 +2,7 @@ package com.codemp.intellij.actions.buffer;
 
 import com.codemp.intellij.CodeMP;
 import com.codemp.intellij.exceptions.ide.BufferDetachException;
-import com.codemp.intellij.jni.CodeMPHandler;
 import com.codemp.intellij.task.BufferEventAwaiterTask;
-import com.codemp.intellij.task.TaskManager;
 import com.codemp.intellij.util.ActionUtil;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -17,7 +15,6 @@ public class BufferDetachAction extends AnAction {
 		if(!res) throw new BufferDetachException(buffer);
 
 		CodeMP.ACTIVE_BUFFERS.remove(buffer);
-		BufferEventAwaiterTask task = TaskManager.getBufferTask();
 		if(task != null) {
 			task.unregisterListener(buffer);
 			if(!silent) ActionUtil.notify(e, "Success",

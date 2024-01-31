@@ -1,7 +1,6 @@
 package com.codemp.intellij.actions;
 
 import com.codemp.intellij.CodeMP;
-import com.codemp.intellij.jni.CodeMPHandler;
 import com.codemp.intellij.util.ActionUtil;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -10,8 +9,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class ConnectAction extends AnAction {
 	public static void connect(AnActionEvent e, String url, boolean silent) {
-		CodeMP.loadLibrary(); //will only load it the first time
-		CodeMPHandler.connect(url);
+		CodeMP.connect(url);
 
 		if(!silent) ActionUtil.notify(e,
 			"Success", String.format("Connected to %s!", url));

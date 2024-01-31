@@ -1,7 +1,6 @@
 package com.codemp.intellij.actions.buffer;
 
 import com.codemp.intellij.CodeMP;
-import com.codemp.intellij.jni.CodeMPHandler;
 import com.codemp.intellij.util.ActionUtil;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;

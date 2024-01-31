@@ -19,16 +19,16 @@ lazy_static! {
 
 #[generate_interface_doc]
 /// the handler class that represent an instance of a CodeMP client
-struct CodeMPHandler {
+struct ClientHandler {
 	client: CodempClient,
 	url: String
 }
 
-impl CodeMPHandler {
+impl ClientHandler {
 	#[generate_interface(constructor)]
 	/// constructor required by flapigen, DO NOT CALL THIS
-	fn new(address: &str) -> CodeMPHandler {
-		CodeMPHandler {
+	fn new(address: &str) -> ClientHandler {
+		ClientHandler {
 			client: RT.block_on(CodempClient::new(address)).unwrap(),
 			url: address.to_string()
 		}
@@ -83,7 +83,7 @@ impl WorkspaceHandler {
 
 	#[generate_interface]
 	/// attach to a buffer and get a [crate::BufferHandler] for it
-	fn attach_buffer(&mut self, path: &str) -> CodempResult<BufferHandler> {
+	fn attach_to_buffer(&mut self, path: &str) -> CodempResult<BufferHandler> {
 		RT.block_on(RT.block_on(self.workspace.write()).attach(path))
 			.map(|buffer| BufferHandler { buffer })
 	}
@@ -124,7 +124,7 @@ impl WorkspaceHandler {
 
 	#[generate_interface]
 	/// detach from a buffer
-	fn detach_buffer(&mut self, path: &str) -> bool {
+	fn detach_from_buffer(&mut self, path: &str) -> bool {
 		RT.block_on(self.workspace.write()).detach(path)
 	}
 

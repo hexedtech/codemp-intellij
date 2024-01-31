@@ -5,6 +5,7 @@ import com.codemp.intellij.exceptions.lib.ChannelException;
 import com.codemp.intellij.jni.CursorEventWrapper;
 import com.codemp.intellij.jni.CursorHandler;
 import com.codemp.intellij.util.ColorUtil;
+import com.codemp.intellij.util.FileUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
@@ -15,7 +16,6 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -34,16 +34,12 @@ public class CursorEventAwaiterTask extends Task.Backgroundable implements Dispo
 	}
 
 	@Override
-	public void dispose() {}
-
-	@Override
 	@SuppressWarnings("InfiniteLoopStatement")
 	public void run(@NotNull ProgressIndicator indicator) {
-		assert myProject != null; //will never fail
 		try {
 			while(true) {
-				CursorEventWrapper event = handler.recv();
-				Editor editor = CodeMP.ACTIVE_BUFFERS.get(event.getBuffer());
+				CursorEventWrapper event = this.handler.recv();
+				Editor editor = FileUtil.getActiveEditorByPath(this.myProject, event.getBuffer());
 				if(editor == null)
 					continue;
 
@@ -77,7 +73,7 @@ public class CursorEventAwaiterTask extends Task.Backgroundable implements Dispo
 								HighlighterLayer.SELECTION,
 								new TextAttributes(
 									null,
-									ColorUtil.colorFromUsername(event.getUser()),
+									ColorUtil.hashColor(event.getUser()),
 									null,
 									null,
 									Font.PLAIN
@@ -90,9 +86,12 @@ public class CursorEventAwaiterTask extends Task.Backgroundable implements Dispo
 				} catch(IndexOutOfBoundsException ignored) {}
 			}
 		} catch(ChannelException ex) { //exited
-			this.highlighterMap.forEach((s, r) -> r.dispose());
-			TaskManager.nullCursorTask();
-			Disposer.dispose(this);
+			this.run(indicator);
 		}
+	}
+
+	@Override
+	public void dispose() {
+		this.highlighterMap.forEach((s, r) -> r.dispose());
 	}
 }
