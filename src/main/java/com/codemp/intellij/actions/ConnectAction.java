@@ -10,7 +10,6 @@ import org.jetbrains.annotations.NotNull;
 public class ConnectAction extends AnAction {
 	public static void connect(AnActionEvent e, String url, boolean silent) {
 		CodeMP.connect(url);
-
 		if(!silent) ActionUtil.notify(e,
 			"Success", String.format("Connected to %s!", url));
 		CodeMP.LOGGER.debug("Connected to {}!", url);

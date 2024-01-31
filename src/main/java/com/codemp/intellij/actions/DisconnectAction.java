@@ -9,9 +9,7 @@ import org.jetbrains.annotations.NotNull;
 public class DisconnectAction extends AnAction {
 	public static void disconnect(AnActionEvent e, boolean silent) {
 		String url = CodeMP.getClient("disconnect").getUrl();
-
 		CodeMP.disconnect();
-
 		if(!silent) ActionUtil.notify(e,
 			"Success", String.format("Disconnected from %s!", url));
 		CodeMP.LOGGER.debug("Connected to {}!", url);

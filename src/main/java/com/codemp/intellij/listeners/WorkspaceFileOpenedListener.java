@@ -1,5 +1,6 @@
 package com.codemp.intellij.listeners;
 
+import com.codemp.intellij.exceptions.lib.TransportException;
 import com.codemp.intellij.jni.BufferHandler;
 import com.codemp.intellij.jni.WorkspaceHandler;
 import com.codemp.intellij.task.BufferEventAwaiterTask;
@@ -39,12 +40,25 @@ public class WorkspaceFileOpenedListener implements FileOpenedSyncListener {
 				String path = FileUtil.getRelativePath(editor.getProject(), file);
 				if(path == null) return;
 
-				BufferHandler bufferHandler = this.handler.attachToBuffer(path);
+				BufferHandler bufferHandler = this.getBufferForPath(path);
 				Disposable disp = Disposer.newDisposable(String.format("codemp-buffer-%s", path));
 				editor.getDocument().addDocumentListener(new BufferEventListener(bufferHandler), disp);
 
 				editor.getDocument().setText(""); //empty it so we can start receiving
 				this.task.activeBuffers.put(path, disp);
 			});
+	}
+
+	/**
+	 * Attach to a buffer or, if it does not exist, implicitly create it.
+	 * @param path the buffer's name (which is the path relative to project root)
+	 * @return the {@link BufferHandler} for it
+	 */
+	private BufferHandler getBufferForPath(String path) {
+		try {
+			return this.handler.attachToBuffer(path);
+		} catch (TransportException ignored) {
+			return this.handler.createBuffer(path);
+		}
 	}
 }

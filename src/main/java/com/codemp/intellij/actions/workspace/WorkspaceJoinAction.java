@@ -18,7 +18,6 @@ public class WorkspaceJoinAction extends AnAction {
 		if(!silent) ActionUtil.notify(e,
 			"Success", String.format("Joined workspace %s!", workspaceId));
 		CodeMP.LOGGER.debug("Joined workspace {}!", workspaceId);
-
 	}
 
 	@Override

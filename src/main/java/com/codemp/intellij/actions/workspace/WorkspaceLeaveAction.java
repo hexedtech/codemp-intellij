@@ -2,7 +2,6 @@ package com.codemp.intellij.actions.workspace;
 
 import com.codemp.intellij.CodeMP;
 import com.codemp.intellij.util.ActionUtil;
-import com.codemp.intellij.workspace.Workspace;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.ui.Messages;

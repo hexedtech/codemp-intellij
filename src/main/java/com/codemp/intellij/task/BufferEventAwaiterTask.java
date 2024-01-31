@@ -1,7 +1,6 @@
 package com.codemp.intellij.task;
 
 import com.codemp.intellij.CodeMP;
-import com.codemp.intellij.exceptions.lib.ChannelException;
 import com.codemp.intellij.exceptions.lib.DeadlockedException;
 import com.codemp.intellij.jni.BufferHandler;
 import com.codemp.intellij.jni.StringVec;
@@ -15,10 +14,12 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class BufferEventAwaiterTask extends Task.Backgroundable implements Disposable {
@@ -33,51 +34,47 @@ public class BufferEventAwaiterTask extends Task.Backgroundable implements Dispo
 	@Override
 	@SuppressWarnings("InfiniteLoopStatement")
 	public void run(@NotNull ProgressIndicator indicator) {
-		try {
+		while(true) {
+			StringVec buffers = new StringVec(); //jni moment
+			this.activeBuffers.keySet().forEach(buffers::push);
+
+			Optional<BufferHandler> bufferOptional = this.handler.selectBuffer(buffers, 100L);
+			if(bufferOptional.isEmpty())
+				continue;
+			BufferHandler buffer = bufferOptional.get();
+
+			List<TextChangeWrapper> changeList = new ArrayList<>();
 			while(true) {
-				StringVec buffers = new StringVec(); //jni moment
-				this.activeBuffers.keySet().forEach(buffers::push);
-
-				Optional<BufferHandler> bufferOptional = this.handler.selectBuffer(buffers, 100L);
-				if(bufferOptional.isEmpty())
+				Optional<TextChangeWrapper> changeOptional;
+				try {
+					 changeOptional = buffer.tryRecv();
+				} catch(DeadlockedException e) {
+					CodeMP.LOGGER.error(e.getMessage());
 					continue;
-				BufferHandler buffer = bufferOptional.get();
-
-				List<TextChangeWrapper> changeList = new ArrayList<>();
-				while(true) {
-					Optional<TextChangeWrapper> changeOptional;
-					try {
-						 changeOptional = buffer.tryRecv();
-					} catch(DeadlockedException e) {
-						CodeMP.LOGGER.error(e.getMessage());
-						continue;
-					}
-					if(changeOptional.isEmpty())
-						break;
-					TextChangeWrapper change = changeOptional.get();
-					CodeMP.LOGGER.debug("Received text change {} from offset {} to {}!",
-						change.getContent(), change.getStart(), change.getEnd());
-					changeList.add(change);
 				}
 
-				Editor bufferEditor = FileUtil.getActiveEditorByPath(this.myProject, buffer.getName());
-				ApplicationManager.getApplication().invokeLaterOnWriteThread(() ->
-					ApplicationManager.getApplication().runWriteAction(() ->
-						CommandProcessor.getInstance().executeCommand(
-							this.myProject,
-							() -> changeList.forEach((change) ->
-								bufferEditor.getDocument().replaceString(
-									(int) change.getStart(), (int) change.getEnd(), change.getContent())
-							),
-							"CodeMPBufferReceive",
-							"codemp-buffer-receive", //TODO: mark this with the name
-							bufferEditor.getDocument()
-					)));
+				if(changeOptional.isEmpty())
+					break;
+				TextChangeWrapper change = changeOptional.get();
+				CodeMP.LOGGER.debug("Received text change {} from offset {} to {}!",
+					change.getContent(), change.getStart(), change.getEnd());
+				changeList.add(change);
 			}
-		} catch(ChannelException ex) { //exited
-			//TODO handle stop
-			Disposer.dispose(this); //stopped
-		}
+
+			Editor bufferEditor = FileUtil.getActiveEditorByPath(this.myProject, buffer.getName());
+			ApplicationManager.getApplication().invokeLaterOnWriteThread(() ->
+				ApplicationManager.getApplication().runWriteAction(() ->
+					CommandProcessor.getInstance().executeCommand(
+						this.myProject,
+						() -> changeList.forEach((change) ->
+							bufferEditor.getDocument().replaceString(
+								(int) change.getStart(), (int) change.getEnd(), change.getContent())
+						),
+						"CodeMPBufferReceive",
+						"codemp-buffer-receive", //TODO: mark this with the name
+						bufferEditor.getDocument()
+				)));
+			}
 	}
 
 	@Override

@@ -76,9 +76,9 @@ impl WorkspaceHandler {
 
 	#[generate_interface]
 	/// create a new buffer in current workspace
-	fn create_buffer(&mut self, path: &str) -> CodempResult<Option<BufferHandler>> {
+	fn create_buffer(&mut self, path: &str) -> CodempResult<BufferHandler> {
 		RT.block_on(RT.block_on(self.workspace.write()).create(path))?;
-		Ok(self.get_buffer(path))
+		Ok(self.get_buffer(path).unwrap())
 	}
 
 	#[generate_interface]
@@ -144,7 +144,7 @@ impl WorkspaceHandler {
 	/// get a [crate::BufferHandler] for one of the workspace's buffers
 	fn get_buffer(&self, path: &str) -> Option<BufferHandler> {
 		RT.block_on(self.workspace.read()).buffer_by_name(path)
-			.map(|b| BufferHandler { buffer: b })
+			.map(|buffer| BufferHandler { buffer })
 	}
 
 	#[generate_interface]
