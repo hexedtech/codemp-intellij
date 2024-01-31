@@ -20,7 +20,8 @@ lazy_static! {
 #[generate_interface_doc]
 /// the handler class that represent an instance of a CodeMP client
 struct CodeMPHandler {
-	client: CodempClient
+	client: CodempClient,
+	url: String
 }
 
 impl CodeMPHandler {
@@ -28,12 +29,13 @@ impl CodeMPHandler {
 	/// constructor required by flapigen, DO NOT CALL THIS
 	fn new(address: &str) -> CodeMPHandler {
 		CodeMPHandler {
-			client: RT.block_on(CodempClient::new(address)).unwrap()
+			client: RT.block_on(CodempClient::new(address)).unwrap(),
+			url: address.to_string()
 		}
 	}
 
 	#[generate_interface]
-	/// create a new workspcae
+	/// create a new workspace
 	fn create_workspace(&mut self, workspace_id: &str) -> CodempResult<WorkspaceHandler> {
 		RT.block_on(self.client.create_workspace(workspace_id))
 			.map(|workspace| WorkspaceHandler { workspace })
@@ -50,6 +52,12 @@ impl CodeMPHandler {
 	/// leave a workspace
 	fn leave_workspace(&mut self, workspace_id: &str) -> CodempResult<()> {
 		RT.block_on(self.client.leave_workspace(workspace_id))
+	}
+
+	#[generate_interface]
+	/// get the url you are currently connected to
+	fn get_url(&self) -> String {
+		self.url.clone()
 	}
 }
 
@@ -78,6 +86,12 @@ impl WorkspaceHandler {
 	fn attach_buffer(&mut self, path: &str) -> CodempResult<BufferHandler> {
 		RT.block_on(RT.block_on(self.workspace.write()).attach(path))
 			.map(|buffer| BufferHandler { buffer })
+	}
+
+	#[generate_interface]
+	/// get a buffer's contents as a flat string
+	fn get_buffer_snapshot(&self , path: &str) -> CodempResult<String> {
+		RT.block_on(RT.block_on(self.workspace.read()).snapshot(path))
 	}
 
 	#[generate_interface]
@@ -115,16 +129,28 @@ impl WorkspaceHandler {
 	}
 
 	#[generate_interface]
+	/// get the workspace id
+	fn get_workspace_id(&self) -> String {
+		RT.block_on(self.workspace.read()).id().clone()
+	}
+
+	#[generate_interface]
 	/// get a [crate::CursorHandler] for the workspace's cursor
-	fn get_cursor(&mut self) -> CursorHandler {
+	fn get_cursor(&self) -> CursorHandler {
 		CursorHandler { cursor: RT.block_on(self.workspace.read()).cursor().clone() }
 	}
 
 	#[generate_interface]
 	/// get a [crate::BufferHandler] for one of the workspace's buffers
-	fn get_buffer(&mut self, path: &str) -> Option<BufferHandler> {
+	fn get_buffer(&self, path: &str) -> Option<BufferHandler> {
 		RT.block_on(self.workspace.read()).buffer_by_name(path)
 			.map(|b| BufferHandler { buffer: b })
+	}
+
+	#[generate_interface]
+	/// get the names of all buffers available in the workspace
+	fn get_filetree(&self) -> StringVec {
+		StringVec { v: RT.block_on(self.workspace.read()).filetree() }
 	}
 
 	#[generate_interface]
@@ -268,14 +294,27 @@ struct StringVec { //jni moment
 
 impl StringVec {
 	#[generate_interface(constructor)]
-	/// initializes an empty vector
+	/// initialize an empty vector
 	fn new() -> StringVec {
 		Self { v: Vec::new() }
 	}
 
 	#[generate_interface]
-	/// pushes a new value onto the vector
+	/// push a new value onto the vector
 	fn push(&mut self, s: String) {
 		self.v.push(s);
+	}
+
+	#[generate_interface]
+	/// get the length of the underlying vector
+	fn length(&self) -> i64 {
+		self.v.len() as i64
+	}
+
+	#[generate_interface]
+	/// access the element at a given index
+	fn get(&self, idx: i64) -> Option<String> {
+		let elem: Option<&String> = self.v.get(idx as usize);
+		elem.map(|s| s.clone())
 	}
 }
