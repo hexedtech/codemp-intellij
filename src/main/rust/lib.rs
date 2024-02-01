@@ -38,20 +38,36 @@ impl ClientHandler {
 	/// create a new workspace
 	fn create_workspace(&mut self, workspace_id: &str) -> CodempResult<WorkspaceHandler> {
 		RT.block_on(self.client.create_workspace(workspace_id))
-			.map(|workspace| WorkspaceHandler { workspace })
+			.map(|workspace| {
+				Self::spawn_updater(workspace.clone());
+				WorkspaceHandler { workspace }
+			})
 	}
 
 	#[generate_interface]
 	/// join a workspace by name
 	fn join_workspace(&mut self, workspace_id: &str) -> CodempResult<WorkspaceHandler> {
 		RT.block_on(self.client.join_workspace(workspace_id))
-			.map(|workspace| WorkspaceHandler { workspace })
+			.map(|workspace| {
+				Self::spawn_updater(workspace.clone());
+				WorkspaceHandler { workspace }
+			})
 	}
 
 	#[generate_interface]
 	/// leave a workspace
 	fn leave_workspace(&mut self, workspace_id: &str) -> CodempResult<()> {
 		RT.block_on(self.client.leave_workspace(workspace_id))
+	}
+
+	fn spawn_updater(workspace: Arc<RwLock<CodempWorkspace>>) {
+		tokio::spawn(async move {
+			loop {
+				tokio::time::sleep(Duration::from_secs(60)).await;
+				workspace.write().await.fetch_buffers().await.unwrap();
+				workspace.write().await.fetch_users().await.unwrap();
+			}
+		});
 	}
 
 	#[generate_interface]
@@ -86,12 +102,6 @@ impl WorkspaceHandler {
 	fn attach_to_buffer(&mut self, path: &str) -> CodempResult<BufferHandler> {
 		RT.block_on(RT.block_on(self.workspace.write()).attach(path))
 			.map(|buffer| BufferHandler { buffer })
-	}
-
-	#[generate_interface]
-	/// get a buffer's contents as a flat string
-	fn get_buffer_snapshot(&self , path: &str) -> CodempResult<String> {
-		RT.block_on(RT.block_on(self.workspace.read()).snapshot(path))
 	}
 
 	#[generate_interface]

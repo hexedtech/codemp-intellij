@@ -17,7 +17,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 public class WorkspaceFileOpenedListener implements FileOpenedSyncListener {
-
 	private final WorkspaceHandler handler;
 	private final BufferEventAwaiterTask task;
 

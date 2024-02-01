@@ -24,10 +24,8 @@ public class FileUtil {
 	public static Editor getActiveEditorByPath(Project project, String path) {
 		return Arrays.stream(FileEditorManager.getInstance(project).getAllEditors())
 			.filter(fe -> fe instanceof TextEditor)
-			.map(fe -> {
-				TextEditor te = (TextEditor) fe;
-				return te.getEditor();
-			}).filter(editor -> path.equals(FileUtil.getRelativePath(editor.getProject(), editor.getVirtualFile())))
+			.map(fe -> ((TextEditor) fe).getEditor())
+			.filter(editor -> path.equals(FileUtil.getRelativePath(editor.getProject(), editor.getVirtualFile())))
 			.findFirst()
 			.orElse(null);
 	}
