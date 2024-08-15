@@ -2,10 +2,11 @@ plugins {
 	id 'java'
 	id 'org.jetbrains.intellij' version '1.16.0'
 	id 'com.github.johnrengelman.shadow' version '8.1.1'
+	id 'com.palantir.git-version' version '3.1.0'
 }
 
-group = 'com.codemp'
-version = '0.1.0'
+group = 'mp.code'
+//version = versionDetails().lastTag
 
 java {
 	sourceCompatibility = targetCompatibility = JavaVersion.VERSION_17
@@ -17,9 +18,9 @@ repositories {
 }
 
 dependencies {
-	implementation 'com.github.adamheinrich:native-utils:master-SNAPSHOT'
 	implementation 'org.slf4j:slf4j-api:2.0.9'
 	implementation 'ch.qos.logback:logback-classic:1.4.12'
+	implementation files('../../lib/dist/java/build/libs/codemp-0.6.2.jar')
 }
 
 intellij {
@@ -30,24 +31,14 @@ intellij {
 shadowJar {
 	archiveClassifier.set('')
 	dependencies {
-		include(dependency('com.github.adamheinrich:native-utils:master-SNAPSHOT'))
-	}
-}
-
-def cargoDir = projectDir.toPath().resolve('target').resolve('release').toFile()
-
-processResources {
-	from(cargoDir) {
-		include('*.dll')
-		include('*.so')
-		into('natives/')
+		include(dependency(files('../../lib/java/build/libs/codemp-6645c46.jar')))
 	}
 }
 
 tasks {
 	patchPluginXml {
 		sinceBuild.set('222')
-		untilBuild.set('232.*')
+		untilBuild.set('233.*')
 	}
 
 	signPlugin {
@@ -60,28 +51,5 @@ tasks {
 		token.set(System.getenv('PUBLISH_TOKEN'))
 	}
 }
-
-//run cargo build
-tasks.register('cargoBuild', Exec) {
-	workingDir '.'
-	commandLine 'cargo', 'build', '--release'
-}
-
-//must act before all other tasks who mess with resources to reliably get the binary in
-patchPluginXml.dependsOn cargoBuild
-
-//delete old jni generated files
-tasks.register('deleteGeneratedNativeInterface', Delete) {
-	delete 'src/main/java/com/codemp/intellij/jni'
-}
-
-//delete cargo build files
-tasks.register('cargoClean', Exec) {
-	workingDir '.'
-	commandLine 'cargo', 'clean'
-	dependsOn deleteGeneratedNativeInterface
-}
-
-clean.dependsOn cargoClean
 
 instrumentedJar.dependsOn shadowJar //TODO: instrumentedJar should use fatjar as input

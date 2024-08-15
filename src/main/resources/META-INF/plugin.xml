@@ -1,5 +1,5 @@
 <idea-plugin>
-    <id>com.codemp.intellij</id>
+    <id>mp.code.intellij</id>
 	<name>CodeMP</name>
     <vendor email="me@zaaarf.foo" url="https://zaaarf.foo">CodeMP</vendor>
 
@@ -10,12 +10,12 @@
     <actions>
         <group id="codemp" text="CodeMP" popup="true">
             <add-to-group group-id="ToolsMenu" anchor="first"/>
-            <action id="codemp.fast-forward" class="com.codemp.intellij.actions.FastForwardAction" text="Just Hurry"/>
-			<action id="codemp.connect" class="com.codemp.intellij.actions.ConnectAction" text="Connect..."/>
-			<action id="codemp.connect" class="com.codemp.intellij.actions.DisconnectAction" text="Disconnect"/>
-			<action id="codemp.workspace.join" class="com.codemp.intellij.actions.workspace.WorkspaceJoinAction"
+            <action id="codemp.fast-forward" class="mp.code.intellij.actions.FastForwardAction" text="Just Hurry"/>
+			<action id="codemp.connect" class="mp.code.intellij.actions.ConnectAction" text="Connect..."/>
+			<action id="codemp.disconnect" class="mp.code.intellij.actions.DisconnectAction" text="Disconnect"/>
+			<action id="codemp.workspace.join" class="mp.code.intellij.actions.workspace.WorkspaceJoinAction"
 				text="Join Workspace"/>
-			<action id="codemp.workspace.leave" class="com.codemp.intellij.actions.workspace.WorkspaceLeaveAction"
+			<action id="codemp.workspace.leave" class="mp.code.intellij.actions.workspace.WorkspaceLeaveAction"
 				text="Leave Workspace"/>
         </group>
 	</actions>
