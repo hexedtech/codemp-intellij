@@ -1,5 +1,6 @@
 package mp.code.intellij.listeners;
 
+import lombok.SneakyThrows;
 import mp.code.intellij.CodeMP;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -10,6 +11,7 @@ import mp.code.exceptions.CodeMPException;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Optional;
+import java.util.OptionalLong;
 
 public class BufferEventListener implements DocumentListener {
 
@@ -20,6 +22,7 @@ public class BufferEventListener implements DocumentListener {
 	}
 
 	@Override
+	@SneakyThrows
 	public void documentChanged(@NotNull DocumentEvent event) {
 		CodeMP.LOGGER.debug("Changed {} to {} at offset {}",
 			event.getOldFragment(), event.getNewFragment(), event.getOffset());
@@ -32,15 +35,11 @@ public class BufferEventListener implements DocumentListener {
 		//TODO move actions break
 		int changeOffset = event.getOffset();
 		CharSequence newFragment = event.getNewFragment();
-		try {
-			this.controller.send(new TextChange(
-				changeOffset,
-				changeOffset + event.getOldFragment().length(),
-				newFragment.toString(),
-				0L
-			));
-		} catch(CodeMPException ignored) {
-			// TODO actually give a shit
-		}
+		this.controller.send(new TextChange(
+			changeOffset,
+			changeOffset + event.getOldFragment().length(),
+			newFragment.toString(),
+			OptionalLong.empty()
+		));
 	}
 }

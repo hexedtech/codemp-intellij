@@ -27,7 +27,7 @@ public class WorkspaceFileClosedListener implements FileEditorManagerListener.Be
 		Disposable disp = this.task.activeBuffers.remove(path);
 		if(disp == null) return;
 
-		//  TODO : this.handler.detachFromBuffer(path);
+		this.handler.detachFromBuffer(path);
 		Disposer.dispose(disp);
 	}
 }

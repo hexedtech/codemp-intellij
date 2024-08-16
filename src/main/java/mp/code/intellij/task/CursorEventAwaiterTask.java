@@ -1,5 +1,7 @@
 package mp.code.intellij.task;
 
+import lombok.SneakyThrows;
+import mp.code.exceptions.DeadlockedException;
 import mp.code.intellij.CodeMP;
 import mp.code.intellij.util.ColorUtil;
 import mp.code.intellij.util.FileUtil;
@@ -23,7 +25,7 @@ import java.awt.*;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-//TODO this is janky as it shows a progress bar it doesn't use tbh
+//TODO this is janky as it shows a progress bar it doesn't use
 //implements disposable so i can use it as lifetime ig
 public class CursorEventAwaiterTask extends Task.Backgroundable implements Disposable {
 	private final CursorController handler;
@@ -35,15 +37,12 @@ public class CursorEventAwaiterTask extends Task.Backgroundable implements Dispo
 	}
 
 	@Override
+	@SneakyThrows
 	@SuppressWarnings("InfiniteLoopStatement")
 	public void run(@NotNull ProgressIndicator indicator) {
 		while(true) {
 			Cursor event;
-			try {
-				event = this.handler.recv();
-			} catch(CodeMPException ex) {
-				continue; // TODO proper handling
-			}
+			event = this.handler.recv();
 			Editor editor = FileUtil.getActiveEditorByPath(this.myProject, event.buffer);
 			if(editor == null)
 				continue;

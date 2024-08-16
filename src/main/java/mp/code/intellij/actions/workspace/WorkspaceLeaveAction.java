@@ -10,8 +10,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class WorkspaceLeaveAction extends AnAction {
 	public static void leave(AnActionEvent e, String workspaceId, boolean silent) {
-		//CodeMP.getClient("leave workspace").leaveWorkspace(workspaceId);
-		// TODO
+		CodeMP.getClient("leave workspace").leaveWorkspace(workspaceId);
 		Disposer.dispose(CodeMP.ACTIVE_WORKSPACES.remove(workspaceId));
 
 		if(!silent) ActionUtil.notify(e, "Success", String.format("Left workspace %s!", workspaceId));

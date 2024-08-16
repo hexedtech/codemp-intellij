@@ -10,8 +10,7 @@
     <actions>
         <group id="codemp" text="CodeMP" popup="true">
             <add-to-group group-id="ToolsMenu" anchor="first"/>
-            <action id="codemp.fast-forward" class="mp.code.intellij.actions.FastForwardAction" text="Just Hurry"/>
-			<action id="codemp.connect" class="mp.code.intellij.actions.ConnectAction" text="Connect..."/>
+				<action id="codemp.connect" class="mp.code.intellij.actions.ConnectAction" text="Connect"/>
 			<action id="codemp.disconnect" class="mp.code.intellij.actions.DisconnectAction" text="Disconnect"/>
 			<action id="codemp.workspace.join" class="mp.code.intellij.actions.workspace.WorkspaceJoinAction"
 				text="Join Workspace"/>
@@ -22,5 +21,11 @@
 
     <extensions defaultExtensionNs="com.intellij">
 		<notificationGroup id="CodeMP" displayType="BALLOON"/>
-    </extensions>
+		<applicationService serviceImplementation="mp.code.intellij.settings.CodeMPSettings"/>
+		<applicationConfigurable
+			parentId="tools"
+			instance="mp.code.intellij.settings.CodeMPSettingsConfigurable"
+			id="mp.code.intellij.settings.CodeMPSettingsConfigurable"
+			displayName="CodeMP"/>
+	</extensions>
 </idea-plugin>

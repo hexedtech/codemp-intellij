@@ -1,5 +1,6 @@
 package mp.code.intellij.task;
 
+import lombok.SneakyThrows;
 import mp.code.intellij.CodeMP;
 import mp.code.intellij.util.FileUtil;
 import com.intellij.openapi.Disposable;
@@ -32,15 +33,13 @@ public class BufferEventAwaiterTask extends Task.Backgroundable implements Dispo
 	}
 
 	@Override
+	@SneakyThrows
 	@SuppressWarnings("InfiniteLoopStatement")
 	public void run(@NotNull ProgressIndicator indicator) {
 		while(true) {
 			Optional<BufferController> bufferOptional;
-			try {
-				bufferOptional = this.handler.selectBuffer(100L);
-			} catch(CodeMPException e) {
-				bufferOptional = Optional.empty(); // TODO error handling
-			}
+			bufferOptional = this.handler.selectBuffer(100L);
+
 			if(bufferOptional.isEmpty())
 				continue;
 			BufferController buffer = bufferOptional.get();

@@ -1,5 +1,6 @@
 package mp.code.intellij.listeners;
 
+import lombok.SneakyThrows;
 import mp.code.intellij.CodeMP;
 import mp.code.intellij.util.FileUtil;
 import com.intellij.openapi.editor.Caret;
@@ -9,7 +10,6 @@ import com.intellij.openapi.editor.event.CaretEvent;
 import com.intellij.openapi.editor.event.CaretListener;
 import mp.code.CursorController;
 import mp.code.data.Cursor;
-import mp.code.exceptions.CodeMPException;
 import org.jetbrains.annotations.NotNull;
 
 public class CursorEventListener implements CaretListener {
@@ -21,6 +21,7 @@ public class CursorEventListener implements CaretListener {
 	}
 
 	@Override
+	@SneakyThrows
 	public void caretPositionChanged(@NotNull CaretEvent event) {
 		Caret caret = event.getCaret();
 		if(caret == null)
@@ -33,17 +34,13 @@ public class CursorEventListener implements CaretListener {
 		);
 
 		Editor editor = event.getEditor();
-		try {
-			this.controller.send(new Cursor(
-				startPos.line,
-				startPos.column,
-				endPos.line,
-				endPos.column,
-				FileUtil.getRelativePath(editor.getProject(), editor.getVirtualFile()),
-				null
-			));
-		} catch(CodeMPException e) {
-			// TODO zzzzz
-		}
+		this.controller.send(new Cursor(
+			startPos.line,
+			startPos.column,
+			endPos.line,
+			endPos.column,
+			FileUtil.getRelativePath(editor.getProject(), editor.getVirtualFile()),
+			null
+		));
 	}
 }
