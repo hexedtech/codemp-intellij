@@ -1,7 +1,6 @@
 package mp.code.intellij.task;
 
 import lombok.SneakyThrows;
-import mp.code.exceptions.DeadlockedException;
 import mp.code.intellij.CodeMP;
 import mp.code.intellij.util.ColorUtil;
 import mp.code.intellij.util.FileUtil;
@@ -18,7 +17,6 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import mp.code.CursorController;
 import mp.code.data.Cursor;
-import mp.code.exceptions.CodeMPException;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;

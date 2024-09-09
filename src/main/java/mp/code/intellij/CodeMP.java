@@ -1,9 +1,9 @@
 package mp.code.intellij;
 
+import mp.code.exceptions.ConnectionException;
 import mp.code.intellij.exceptions.ide.NotConnectedException;
 import mp.code.intellij.workspace.IJWorkspace;
 import mp.code.Client;
-import mp.code.exceptions.CodeMPException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -15,7 +15,7 @@ public class CodeMP {
 	public static final Map<String, IJWorkspace> ACTIVE_WORKSPACES =  new ConcurrentHashMap<>();
 	private static Client CLIENT = null;
 
-	public static void connect(String url, String username, String password) throws CodeMPException {
+	public static void connect(String url, String username, String password) throws ConnectionException {
 		CLIENT = Client.connect(url, username, password);
 	}
 

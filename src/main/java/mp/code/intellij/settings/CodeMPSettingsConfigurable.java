@@ -1,14 +1,13 @@
 package mp.code.intellij.settings;
 
-import com.intellij.credentialStore.CredentialAttributes;
 import com.intellij.credentialStore.Credentials;
 import com.intellij.credentialStore.OneTimeString;
-import com.intellij.ide.passwordSafe.PasswordSafe;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBPasswordField;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.util.ui.FormBuilder;
+import com.intellij.util.ui.JBFont;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 
@@ -53,8 +52,7 @@ final class CodeMPSettingsConfigurable implements Configurable {
 	public void apply() {
 		CodeMPSettings.State state = Objects.requireNonNull(CodeMPSettings.getInstance().getState());
 		state.serverUrl = this.component.serverUrlField.getText();
-		CredentialAttributes attributes = CodeMPSettings.createCredentialAttributes();
-		PasswordSafe.getInstance().set(attributes, new Credentials(
+		state.setCredentials(new Credentials(
 			this.component.userNameField.getText(),
 			this.component.passwordField.getPassword()
 		));
@@ -70,7 +68,6 @@ final class CodeMPSettingsConfigurable implements Configurable {
 			this.component.userNameField.setText(cred.getUserName());
 			this.component.passwordField.setText(cred.getPasswordAsString());
 		}
-
 	}
 
 	@Override
@@ -86,6 +83,7 @@ final class CodeMPSettingsConfigurable implements Configurable {
 
 		Component() {
 			this.mainPanel = FormBuilder.createFormBuilder()
+				.addComponent(new JBLabel("Connection").withFont(JBFont.h2().asBold()))
 				.addLabeledComponent(new JBLabel("Server address:"), this.serverUrlField, 1, false)
 				.addLabeledComponent(new JBLabel("Username:"), this.userNameField, 1, false)
 				.addLabeledComponent(new JBLabel("Password:"), this.passwordField, 1, false)

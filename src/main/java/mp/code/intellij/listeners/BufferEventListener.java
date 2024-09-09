@@ -7,10 +7,8 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import mp.code.BufferController;
 import mp.code.data.TextChange;
-import mp.code.exceptions.CodeMPException;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Optional;
 import java.util.OptionalLong;
 
 public class BufferEventListener implements DocumentListener {

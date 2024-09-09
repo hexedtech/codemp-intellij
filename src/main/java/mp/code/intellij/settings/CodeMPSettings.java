@@ -9,6 +9,7 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import lombok.Getter;
+import lombok.Setter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,16 +34,26 @@ public class CodeMPSettings implements PersistentStateComponent<CodeMPSettings.S
 		this.currentState = state;
 	}
 
-	private static final String KEY = "cred";
-	static CredentialAttributes createCredentialAttributes() {
-		return new CredentialAttributes(CredentialAttributesKt.generateServiceName("CodeMP", KEY));
-	}
-
+	@Getter
+	@Setter
 	public static class State {
-		@Getter String serverUrl;
+		String serverUrl;
+
+		private static CredentialAttributes createCredentialAttributes() {
+			return new CredentialAttributes(CredentialAttributesKt.generateServiceName(
+				"CodeMP",
+				"login"
+			));
+		}
+
 		public @Nullable Credentials getCredentials() {
 			CredentialAttributes attr = createCredentialAttributes();
 			return PasswordSafe.getInstance().get(attr);
+		}
+
+		public void setCredentials(Credentials creds) {
+			CredentialAttributes attributes = createCredentialAttributes();
+			PasswordSafe.getInstance().set(attributes, creds);
 		}
 	}
 }

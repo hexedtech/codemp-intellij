@@ -1,19 +1,18 @@
 package mp.code.intellij.actions;
 
 import com.intellij.credentialStore.Credentials;
+import mp.code.exceptions.ConnectionException;
 import mp.code.intellij.CodeMP;
 import mp.code.intellij.settings.CodeMPSettings;
 import mp.code.intellij.util.ActionUtil;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import mp.code.exceptions.CodeMPException;
-import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
 public class ConnectAction extends AnAction {
-	public static void connect(AnActionEvent e, boolean silent) throws NullPointerException, CodeMPException {
+	public static void connect(AnActionEvent e, boolean silent) throws NullPointerException, ConnectionException {
 		CodeMPSettings.State state = Objects.requireNonNull(CodeMPSettings.getInstance().getState());
 		Credentials creds = Objects.requireNonNull(state.getCredentials());
 		CodeMP.connect(

@@ -13,8 +13,6 @@ import com.intellij.openapi.project.Project;
 import mp.code.BufferController;
 import mp.code.Workspace;
 import mp.code.data.TextChange;
-import mp.code.exceptions.CodeMPException;
-import mp.code.exceptions.DeadlockedException;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -49,10 +47,7 @@ public class BufferEventAwaiterTask extends Task.Backgroundable implements Dispo
 				Optional<TextChange> changeOptional;
 				try {
 					changeOptional = buffer.tryRecv();
-				} catch(DeadlockedException e) {
-					CodeMP.LOGGER.error(e.getMessage());
-					continue;
-				} catch(CodeMPException e) {
+				} catch(Exception e) {
 					throw new RuntimeException(e);
 				}
 

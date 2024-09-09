@@ -33,7 +33,7 @@ intellij {
 shadowJar {
 	archiveClassifier.set('')
 	dependencies {
-		include(dependency(files('../../lib/java/build/libs/codemp-6645c46.jar')))
+		include(dependency(files('../../lib/java/build/libs/codemp-0.6.2.jar')))
 	}
 }
 

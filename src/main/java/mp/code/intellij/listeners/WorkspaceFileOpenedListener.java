@@ -1,5 +1,6 @@
 package mp.code.intellij.listeners;
 
+import mp.code.exceptions.ConnectionException;
 import mp.code.intellij.task.BufferEventAwaiterTask;
 import mp.code.intellij.util.FileUtil;
 import com.intellij.openapi.Disposable;
@@ -11,7 +12,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import mp.code.BufferController;
 import mp.code.Workspace;
-import mp.code.exceptions.CodeMPException;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -56,10 +56,11 @@ public class WorkspaceFileOpenedListener implements FileOpenedSyncListener {
 	private BufferController getBufferForPath(String path) {
 		try {
 			return this.handler.attachToBuffer(path);
-		} catch (CodeMPException ignored) {
+		} catch (ConnectionException ignored) {
 			try {
-				return this.handler.createBuffer(path);
-			} catch(CodeMPException e) {
+				this.handler.createBuffer(path);
+				return this.handler.attachToBuffer(path);
+			} catch(ConnectionException e) {
 				throw new RuntimeException(e);
 			}
 		}

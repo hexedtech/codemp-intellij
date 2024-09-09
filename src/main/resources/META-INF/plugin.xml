@@ -19,7 +19,11 @@
         </group>
 	</actions>
 
-    <extensions defaultExtensionNs="com.intellij">
+	<extensions defaultExtensionNs="com.intellij">
+		<virtualFileSystem
+				id="codemp_vfs"
+				key="codemp"
+				implementationClass="mp.code.intellij.vfs.CodeMPFileSystem"/>
 		<notificationGroup id="CodeMP" displayType="BALLOON"/>
 		<applicationService serviceImplementation="mp.code.intellij.settings.CodeMPSettings"/>
 		<applicationConfigurable
