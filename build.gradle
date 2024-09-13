@@ -1,6 +1,6 @@
 plugins {
 	id 'java'
-	id 'org.jetbrains.intellij' version '1.16.0'
+	id 'org.jetbrains.intellij.platform' version '2.0.1'
 	id 'com.github.johnrengelman.shadow' version '8.1.1'
 	id 'com.palantir.git-version' version '3.1.0'
 }
@@ -15,6 +15,9 @@ java {
 repositories {
 	mavenCentral()
 	maven { url 'https://jitpack.io' }
+	intellijPlatform {
+		defaultRepositories()
+	}
 }
 
 dependencies {
@@ -23,11 +26,14 @@ dependencies {
 	implementation files('../../lib/dist/java/build/libs/codemp-0.6.2.jar')
 	compileOnly 'org.projectlombok:lombok:1.18.34'
 	annotationProcessor 'org.projectlombok:lombok:1.18.34'
-}
 
-intellij {
-	version.set('2023.3')
-	type.set('IC')
+	intellijPlatform { // TODO: not all of these may be needed, but whatever
+		intellijIdeaCommunity('2023.3')
+		bundledPlugin("com.intellij.java")
+		pluginVerifier()
+		zipSigner()
+		instrumentationTools()
+	}
 }
 
 shadowJar {
