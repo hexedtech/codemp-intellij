@@ -1,7 +1,8 @@
 package mp.code.intellij.vfs;
 
-import com.intellij.openapi.util.NlsSafe;
+import com.intellij.ide.projectView.impl.ProjectTreeStructure;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileWithId;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import mp.code.exceptions.ControllerException;
@@ -22,9 +23,14 @@ import java.util.Optional;
 public class CodeMPFile extends VirtualFile {
 	protected final CodeMPFileSystem fileSystem;
 	protected final CodeMPPath path;
+	protected final boolean isDirectory; // TODO exists ONLY for ez debugging, remove afterwards
+
+	public CodeMPFile(CodeMPFileSystem fs, CodeMPPath p) {
+		this(fs, p, false);
+	}
 
 	@Override
-	public @NotNull @NlsSafe String getName() {
+	public @NotNull String getName() {
 		return this.path.getFileName();
 	}
 
@@ -47,15 +53,15 @@ public class CodeMPFile extends VirtualFile {
 	public boolean isValid() {
 		return CodeMP.getClient("validity check")
 			.getWorkspace(this.path.getWorkspaceName())
-			.map(ws -> ws.getFileTree(Optional.of(this.path.getRealPath())))
+			.map(ws -> ws.getFileTree(Optional.of(this.path.getRealPath()), true))
 			.map(buf -> buf.length != 0)
 			.orElse(false);
 	}
 
 	@Override
-	public @Nullable CodeMPFolder getParent() {
+	public @Nullable CodeMPDirectory getParent() {
 		return this.path.getParent()
-			.map(parent -> new CodeMPFolder(this.fileSystem, parent))
+			.map(parent -> new CodeMPDirectory(this.fileSystem, parent))
 			.orElse(null);
 	}
 

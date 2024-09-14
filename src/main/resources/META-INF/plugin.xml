@@ -23,6 +23,7 @@
 		<virtualFileSystem
 				id="codemp_vfs"
 				key="codemp"
+				physical="false"
 				implementationClass="mp.code.intellij.vfs.CodeMPFileSystem"/>
 		<notificationGroup id="CodeMP" displayType="BALLOON"/>
 		<applicationService serviceImplementation="mp.code.intellij.settings.CodeMPSettings"/>
@@ -31,5 +32,6 @@
 			instance="mp.code.intellij.settings.CodeMPSettingsConfigurable"
 			id="mp.code.intellij.settings.CodeMPSettingsConfigurable"
 			displayName="CodeMP"/>
+		<workspaceModel.fileIndexContributor implementation="mp.code.intellij.vfs.CodeMPFileIndexContributor" />
 	</extensions>
 </idea-plugin>

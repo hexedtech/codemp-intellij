@@ -33,8 +33,8 @@ import java.util.function.BiConsumer;
  *  - Already open remote module will crash if not for that janky try-catch in {@link #findFileByPath(String)}, maybe
  *    try to connect quietly?
  */
-@Getter
-public class CodeMPFileSystem extends VirtualFileSystem {
+@Getter // implements NonPhysicalFileSystem?
+public class CodeMPFileSystem extends VirtualFileSystem { // implements NonPhysicalFileSystem {
 	public static String PROTOCOL = "codemp";
 	private final Set<VirtualFileListener> listeners;
 
@@ -51,30 +51,29 @@ public class CodeMPFileSystem extends VirtualFileSystem {
 	public @Nullable CodeMPFile findFileByPath(@NotNull @NonNls String path) {
 		CodeMPPath cmpPath = new CodeMPPath(path);
 		try {
-			return CodeMP.getClient("file seek")
-				.getWorkspace(cmpPath.getWorkspaceName())
-				.filter(ws -> ws.getFileTree(Optional.of(cmpPath.getRealPath())).length != 0)
-				.map(ws -> new CodeMPFile(this, cmpPath))
-				.orElseGet(() -> new CodeMPFolder(this, cmpPath));
+			return this.fileOrFolderByPath(cmpPath);
 		} catch(NotConnectedException ex) {
-			CodeMPSettings.State state = Objects.requireNonNull(CodeMPSettings.getInstance().getState());
-			Credentials credentials = Objects.requireNonNull(state.getCredentials());
 			try {
+				CodeMPSettings.State state = Objects.requireNonNull(CodeMPSettings.getInstance().getState());
+				Credentials credentials = Objects.requireNonNull(state.getCredentials());
 				CodeMP.connect(
-					Objects.requireNonNull(state.getServerUrl()),
 					Objects.requireNonNull(credentials.getUserName()),
 					Objects.requireNonNull(credentials.getPasswordAsString())
 				);
-				return CodeMP.getClient("file seek")
-					.getWorkspace(cmpPath.getWorkspaceName())
-					.filter(ws -> ws.getFileTree(Optional.of(cmpPath.getRealPath())).length != 0)
-					.map(ws -> new CodeMPFile(this, cmpPath))
-					.orElseGet(() -> new CodeMPFolder(this, cmpPath));
-			} catch(ConnectionException e) {
+				return this.fileOrFolderByPath(cmpPath);
+			} catch(ConnectionException | NullPointerException e) {
 				return null;
 			} // TODO this sucks
 		}
 	}
+
+	private CodeMPFile fileOrFolderByPath(CodeMPPath cmpPath) {
+		return CodeMP.getClient("file seek")
+			.getWorkspace(cmpPath.getWorkspaceName())
+			.filter(ws -> ws.getFileTree(Optional.ofNullable(cmpPath.getRealPath()), true).length != 0).map(ws -> new CodeMPFile(this, cmpPath))
+			.orElseGet(() -> new CodeMPDirectory(this, cmpPath));
+	}
+
 
 	@Override
 	public void refresh(boolean asynchronous) {
@@ -127,7 +126,7 @@ public class CodeMPFileSystem extends VirtualFileSystem {
 
 	@Override
 	protected @NotNull CodeMPFile createChildFile(Object requester, @NotNull VirtualFile vDir, @NotNull String fileName) throws IOException {
-		if(vDir instanceof CodeMPFolder parent) {
+		if(vDir instanceof CodeMPDirectory parent) {
 			try {
 				Optional<Workspace> ws = CodeMP.getClient("delete file").getWorkspace(parent.path.getWorkspaceName());
 				if(ws.isPresent()) {
@@ -147,13 +146,13 @@ public class CodeMPFileSystem extends VirtualFileSystem {
 	}
 
 	@Override
-	protected @NotNull CodeMPFolder createChildDirectory(
+	protected @NotNull CodeMPDirectory createChildDirectory(
 		Object requester,
 		@NotNull VirtualFile vDir,
 		@NotNull String dirName
 	) throws IOException {
-		if(vDir instanceof CodeMPFolder parent) {
-			return new CodeMPFolder(
+		if(vDir instanceof CodeMPDirectory parent) {
+			return new CodeMPDirectory(
 				this,
 				parent.path.resolve(dirName)
 			);
@@ -207,4 +206,6 @@ public class CodeMPFileSystem extends VirtualFileSystem {
 	public @Nullable Path getNioPath(@NotNull VirtualFile file) {
 		return file.toNioPath();
 	}
+
+
 }

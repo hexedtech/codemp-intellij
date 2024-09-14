@@ -1,6 +1,5 @@
 package mp.code.intellij.vfs;
 
-import com.intellij.openapi.vfs.VirtualFile;
 import lombok.Getter;
 import mp.code.intellij.CodeMP;
 import org.jetbrains.annotations.NotNull;
@@ -13,10 +12,10 @@ import java.util.Arrays;
 import java.util.Optional;
 
 @Getter
-public class CodeMPFolder extends CodeMPFile {
+public class CodeMPDirectory extends CodeMPFile {
 
-	public CodeMPFolder(CodeMPFileSystem fileSystem, CodeMPPath path) {
-		super(fileSystem, path);
+	public CodeMPDirectory(CodeMPFileSystem fileSystem, CodeMPPath path) {
+		super(fileSystem, path, true);
 	}
 
 	@Override
@@ -39,7 +38,7 @@ public class CodeMPFolder extends CodeMPFile {
 		return CodeMP.getClient("get folder children")
 			.getWorkspace(this.path.getWorkspaceName())
 			.map(ws ->
-				Arrays.stream(ws.getFileTree(Optional.of(this.path.getRealPath())))
+				Arrays.stream(ws.getFileTree(Optional.of(this.path.getRealPath()), false))
 					.map(p -> new CodeMPPath(this.path.getWorkspaceName(), p))
 					.map(CodeMPPath::join)
 					.map(this.fileSystem::findFileByPath)
@@ -80,4 +79,5 @@ public class CodeMPFolder extends CodeMPFile {
 	public @NotNull InputStream getInputStream() throws IOException {
 		throw new RuntimeException("WHAT FOLDER INPUT");
 	}
+
 }

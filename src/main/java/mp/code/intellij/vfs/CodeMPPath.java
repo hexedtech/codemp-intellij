@@ -1,5 +1,6 @@
 package mp.code.intellij.vfs;
 
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import org.jetbrains.annotations.NotNull;
@@ -16,6 +17,7 @@ import java.util.Optional;
  * This helper class manages just that.
  */
 @Getter @Setter
+@EqualsAndHashCode
 public class CodeMPPath {
 	/**
 	 * The name of the workspace that contains this path.

@@ -45,7 +45,7 @@ public class FileUtil {
 		return CodeMP.getClient("buffer access")
 			.getWorkspace(path.getWorkspaceName())
 			.flatMap(ws -> {
-				String[] matches = ws.getFileTree(Optional.of(path.getRealPath()));
+				String[] matches = ws.getFileTree(Optional.of(path.getRealPath()), true);
 				if(matches.length == 0) return Optional.empty();
 				Optional<BufferController> controller = ws.getBuffer(path.getRealPath());
 				if(controller.isPresent()) return controller;
