@@ -36,7 +36,7 @@ public class CursorEventListener implements CaretListener {
 			startPos.line, startPos.column, endPos.line, endPos.column
 		);
 
-		new Thread(() -> { // kys
+		new Thread(() -> {
 			ApplicationManager.getApplication().runReadAction(() -> {
 				Editor editor = event.getEditor();
 				try {

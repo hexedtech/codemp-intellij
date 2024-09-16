@@ -108,7 +108,7 @@ public class InteractionUtil {
 				eventMulticaster.addCaretListener(new CursorEventListener()); // TODO disposable
 
 				CodeMP.getActiveWorkspace().getCursor().callback(controller -> {
-					ApplicationManager.getApplication().invokeLater(() -> {
+					new Thread(() -> {
 						try {
 							while(true) {
 								Optional<Cursor> c = controller.tryRecv();
@@ -118,20 +118,20 @@ public class InteractionUtil {
 								CodeMP.LOGGER.debug(
 									"Cursor moved by user {}! Start pos: {}x {}y; end pos: {}x {}y in buffer {}!",
 									event.user,
-									event.startCol, event.startRow,
-									event.endCol, event.endRow,
+									event.startCol,
+									event.startRow,
+									event.endCol,
+									event.endRow,
 									event.buffer
 								);
 
 								try {
-									ApplicationManager.getApplication().invokeLater(() -> {
+									ApplicationManager.getApplication().runReadAction(() -> {
 										Editor editor = FileUtil.getActiveEditorByPath(this.myProject, event.buffer);
 										if(editor == null) return;
 
-										int startOffset = editor.getDocument()
-											.getLineStartOffset(event.startRow) + event.startCol;
-										int endOffset = editor.getDocument()
-											.getLineStartOffset(event.startRow) + event.startCol;
+										int startOffset = editor.getDocument().getLineStartOffset(event.startRow) + event.startCol;
+										int endOffset = editor.getDocument().getLineStartOffset(event.endRow) + event.endCol;
 
 										int documentLength = editor.getDocument().getTextLength();
 										if(startOffset > documentLength || endOffset > documentLength) {
@@ -153,19 +153,19 @@ public class InteractionUtil {
 													null,
 													null,
 													Font.PLAIN
-												), HighlighterTargetArea.EXACT_RANGE
+												),
+												HighlighterTargetArea.EXACT_RANGE
 											)
 										);
 
-										if(previous != null)
-											previous.dispose();
+										if(previous != null) previous.dispose();
 									});
-								} catch(IndexOutOfBoundsException ignored) {}
+								} catch(IndexOutOfBoundsException ignored) {} // don't crash over a bad cursor event
 							}
 						} catch(ControllerException ex) {
 							notifyError(project, "Error receiving change", ex);
 						}
-					});
+					}).start();
 				});
 
 				if(after != null) after.run();
