@@ -1,7 +1,9 @@
 package mp.code.intellij.util;
 
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -9,9 +11,11 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import mp.code.BufferController;
 import mp.code.exceptions.ConnectionException;
+import mp.code.exceptions.ControllerException;
 import mp.code.intellij.CodeMP;
 import mp.code.intellij.vfs.CodeMPPath;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Optional;
 
@@ -33,6 +37,29 @@ public class FileUtil {
 			.filter(editor -> path.equals(FileUtil.getRelativePath(editor.getProject(), editor.getVirtualFile())))
 			.findFirst()
 			.orElse(null);
+	}
+
+	public static FileEditor getAndRegisterBufferEquivalent(Object requestor, Project project, BufferController buffer) throws ControllerException, IOException {
+		VirtualFile contentRoot = ProjectRootManager.getInstance(project).getContentRoots()[0];
+		String bufferName = buffer.getName();
+
+		VirtualFile found = contentRoot.findFileByRelativePath(bufferName);
+		if(found == null) {
+			VirtualFile lastParent = contentRoot;
+			String[] path = bufferName.split("/");
+			for(int i = 0; i < path.length - 1; i++)
+				lastParent = lastParent.createChildDirectory(requestor, path[i]);
+			found = lastParent.createChildData(requestor, path[path.length - 1]);
+		}
+
+		found.setBinaryContent(buffer.getContent().getBytes());
+
+		CodeMP.BUFFER_MAPPER.put(found.toNioPath(), bufferName);
+
+		return FileEditorManager.getInstance(project).openEditor(
+			new OpenFileDescriptor(project, found, 0),
+			true
+		).get(0);
 	}
 
 	/**

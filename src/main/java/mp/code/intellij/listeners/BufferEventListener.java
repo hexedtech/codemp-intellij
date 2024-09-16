@@ -1,23 +1,21 @@
 package mp.code.intellij.listeners;
 
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.vfs.VirtualFile;
 import lombok.SneakyThrows;
+import mp.code.exceptions.ControllerException;
 import mp.code.intellij.CodeMP;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
-import mp.code.BufferController;
 import mp.code.data.TextChange;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Objects;
 import java.util.OptionalLong;
 
 public class BufferEventListener implements DocumentListener {
-
-	private final BufferController controller;
-
-	public BufferEventListener(BufferController controller) {
-		this.controller = controller;
-	}
 
 	@Override
 	@SneakyThrows
@@ -30,14 +28,28 @@ public class BufferEventListener implements DocumentListener {
 			if(groupString.startsWith("codemp-buffer-receive") || groupString.startsWith("codemp-buffer-sync"))
 				return;
 
-		//TODO move actions break
-		int changeOffset = event.getOffset();
-		CharSequence newFragment = event.getNewFragment();
-		this.controller.send(new TextChange(
-			changeOffset,
-			changeOffset + event.getOldFragment().length(),
-			newFragment.toString(),
-			OptionalLong.empty()
-		));
+		VirtualFile file = EditorFactory.getInstance().editors(event.getDocument())
+			.map(Editor::getVirtualFile)
+			.filter(Objects::nonNull)
+			.filter(vf -> vf.getFileSystem().getNioPath(vf) != null)
+			.findFirst()
+			.orElse(null);
+
+		if(file == null) return;
+
+		CodeMP.getActiveWorkspace().getBuffer(CodeMP.BUFFER_MAPPER.get(file.toNioPath())).ifPresent(controller -> {
+			int changeOffset = event.getOffset();
+			CharSequence newFragment = event.getNewFragment();
+			try {
+				controller.send(new TextChange(
+					changeOffset,
+					changeOffset + event.getOldFragment().length(),
+					newFragment.toString(),
+					OptionalLong.empty()
+				));
+			} catch(ControllerException e) {
+				throw new RuntimeException(e);
+			}
+		});
 	}
 }

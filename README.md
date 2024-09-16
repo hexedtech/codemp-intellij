@@ -1,6 +1,7 @@
 [![codemp](https://code.mp/static/banner.png)](https://code.mp)
 
-> `codemp` is a **collaborative** text editing solution to work remotely.
+> [`codemp`](https://github.com/hexedtech/codemp) is a **collaborative** text editing solution to work
+> remotely.
 
 It seamlessly integrates in your editor providing remote cursors and instant text synchronization,
 as well as a remote virtual workspace for you and your team.

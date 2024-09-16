@@ -1,26 +1,25 @@
 package mp.code.intellij.actions;
 
-import mp.code.intellij.CodeMP;
-import mp.code.intellij.util.ActionUtil;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import mp.code.intellij.CodeMP;
+import mp.code.intellij.util.InteractionUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class DisconnectAction extends AnAction {
-	public static void disconnect(AnActionEvent e, boolean silent) {
-		String url = CodeMP.getClient("disconnect").getUrl();
-		CodeMP.disconnect();
-		if(!silent) ActionUtil.notify(e,
-			"Success", String.format("Disconnected from %s!", url));
-		CodeMP.LOGGER.debug("Connected to {}!", url);
+	@Override
+	public void actionPerformed(@NotNull AnActionEvent e) {
+		InteractionUtil.disconnect(e.getProject());
 	}
 
 	@Override
-	public void actionPerformed(@NotNull AnActionEvent e) {
-		try {
-			disconnect(e, false);
-		} catch(Exception ex) {
-			ActionUtil.notifyError(e, "Failed to disconnect!", ex);
-		}
+	public void update(@NotNull AnActionEvent e) {
+		e.getPresentation().setEnabled(CodeMP.isConnected());
+	}
+
+	@Override
+	public @NotNull ActionUpdateThread getActionUpdateThread() {
+		return ActionUpdateThread.EDT;
 	}
 }

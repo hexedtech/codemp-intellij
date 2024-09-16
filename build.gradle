@@ -60,4 +60,7 @@ tasks {
 	}
 }
 
-instrumentedJar.dependsOn shadowJar //TODO: instrumentedJar should use fatjar as input
+// useful for debugging
+runIde.doFirst { environment 'RUST_BACKTRACE', 'full' }
+
+build.dependsOn shadowJar

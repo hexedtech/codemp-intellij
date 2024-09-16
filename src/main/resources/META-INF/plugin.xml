@@ -33,5 +33,10 @@
 			id="mp.code.intellij.settings.CodeMPSettingsConfigurable"
 			displayName="CodeMP"/>
 		<workspaceModel.fileIndexContributor implementation="mp.code.intellij.vfs.CodeMPFileIndexContributor" />
+		<toolWindow
+				id="CodeMP"
+				factoryClass="mp.code.intellij.ui.CodeMPToolWindowFactory"
+				anchor="right"
+				doNotActivateOnStart="false" />
 	</extensions>
 </idea-plugin>
