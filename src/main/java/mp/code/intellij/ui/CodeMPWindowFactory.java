@@ -9,6 +9,7 @@ import com.intellij.openapi.wm.ToolWindowFactory;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.treeStructure.Tree;
+import com.jgoodies.forms.layout.FormLayout;
 import mp.code.intellij.CodeMP;
 import mp.code.intellij.util.cb.BufferCallback;
 import mp.code.intellij.util.FileUtil;
@@ -23,7 +24,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.MouseEvent;
 import java.util.Optional;
 
-public class CodeMPToolWindowFactory implements ToolWindowFactory, DumbAware {
+public class CodeMPWindowFactory implements ToolWindowFactory, DumbAware {
 	@Override
 	public void createToolWindowContent(
 		@NotNull Project project,
@@ -111,6 +112,7 @@ public class CodeMPToolWindowFactory implements ToolWindowFactory, DumbAware {
 							CodeMPToolWindow.this.redraw(project);
 						}
 					});
+					createButton.setSize(createButton.getPreferredSize());
 
 					JTree tree = drawTree(CodeMP.getActiveWorkspace().getFileTree(Optional.empty(), false));
 					tree.addMouseListener(new SimpleMouseListener() {
@@ -138,6 +140,7 @@ public class CodeMPToolWindowFactory implements ToolWindowFactory, DumbAware {
 							});
 						}
 					});
+
 					this.add(createButton);
 					this.add(tree);
 				}

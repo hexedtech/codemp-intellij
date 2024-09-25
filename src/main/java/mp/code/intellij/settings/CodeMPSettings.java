@@ -37,8 +37,6 @@ public class CodeMPSettings implements PersistentStateComponent<CodeMPSettings.S
 	@Getter
 	@Setter
 	public static class State {
-		String serverUrl;
-
 		private static CredentialAttributes createCredentialAttributes() {
 			return new CredentialAttributes(CredentialAttributesKt.generateServiceName(
 				"CodeMP",

@@ -12,7 +12,8 @@ import java.util.concurrent.ConcurrentHashMap;
  * Allows association of IntelliJ {@link Disposable Disposables} with CodeMP-related
  * lifetimes (which are managed by a {@link Cleaner}).
  */
-public class CodeMPMemoryManager {
+@SuppressWarnings("UnusedReturnValue")
+public class MemoryManager {
 	private static ClientDisposable clientDisposable = null;
 
 	public static boolean startClientLifetime() {
@@ -35,7 +36,7 @@ public class CodeMPMemoryManager {
 
 	public static boolean startWorkspaceLifetime(String workspace) {
 		if(clientDisposable.workspaces.containsKey(workspace)) return false;
-		clientDisposable.workspaces.put(workspace, new DisposableWorkspace());
+		clientDisposable.workspaces.put(workspace, new WorkspaceDisposable());
 		return true;
 	}
 
@@ -43,29 +44,37 @@ public class CodeMPMemoryManager {
 		return clientDisposable.workspaces.get(workspace);
 	}
 
-	public static boolean endWorkspaceLifetime(String workspace, String buffer) {
-		if(clientDisposable == null) return false;
-		ClientDisposable tmp = clientDisposable;
-		clientDisposable = null;
-		Disposer.dispose(tmp);
+	public static boolean endWorkspaceLifetime(String workspace) {
+		WorkspaceDisposable ws = clientDisposable.workspaces.remove(workspace);
+		if(ws == null) return false;
+		Disposer.dispose(ws);
 		return true;
 	}
 
 	public static boolean startBufferLifetime(String workspace, String buffer) {
-
+		WorkspaceDisposable ws = (WorkspaceDisposable) getWorkspaceLifetime(workspace);
+		if(ws == null || ws.buffers.containsKey(buffer)) return false;
+		ws.buffers.put(buffer, Disposer.newDisposable());
+		return true;
 	}
 
 	public static @Nullable Disposable getBufferLifetime(String workspace, String buffer) {
-
+		WorkspaceDisposable ws = (WorkspaceDisposable) getWorkspaceLifetime(workspace);
+		if(ws == null) return null;
+		return ws.buffers.get(buffer);
 	}
 
 	public static boolean endBufferLifetime(String workspace, String buffer) {
-
+		WorkspaceDisposable ws = (WorkspaceDisposable) getWorkspaceLifetime(workspace);
+		if(ws == null) return false;
+		Disposable buf = ws.buffers.get(buffer);
+		if(buf == null) return false;
+		Disposer.dispose(buf);
+		return true;
 	}
 
 	private static class ClientDisposable implements Disposable {
-		private final Map<String, DisposableWorkspace> workspaces = new ConcurrentHashMap<>();
-
+		private final Map<String, WorkspaceDisposable> workspaces = new ConcurrentHashMap<>();
 		@Override
 		public void dispose() {
 			this.workspaces.values().forEach(Disposer::dispose);
@@ -73,9 +82,8 @@ public class CodeMPMemoryManager {
 		}
 	}
 
-	private static class DisposableWorkspace implements Disposable {
+	private static class WorkspaceDisposable implements Disposable {
 		private final Map<String, Disposable> buffers = new ConcurrentHashMap<>();
-
 		@Override
 		public void dispose() {
 			this.buffers.values().forEach(Disposer::dispose);

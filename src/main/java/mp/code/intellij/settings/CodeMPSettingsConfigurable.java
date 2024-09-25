@@ -24,11 +24,6 @@ final class CodeMPSettingsConfigurable implements Configurable {
 		return "CodeMP";
 	}
 
-	@Override
-	public JComponent getPreferredFocusedComponent() {
-		return this.component.serverUrlField;
-	}
-
 	@Nullable
 	@Override
 	public JComponent createComponent() {
@@ -40,8 +35,7 @@ final class CodeMPSettingsConfigurable implements Configurable {
 	public boolean isModified() {
 		CodeMPSettings.State state = Objects.requireNonNull(CodeMPSettings.getInstance().getState());
 		Credentials creds = state.getCredentials();
-		return !this.component.serverUrlField.getText().equals(state.serverUrl)
-			|| (creds == null && (this.component.userNameField.getText() != null || this.component.passwordField.getPassword() != null))
+		return (creds == null && (this.component.userNameField.getText() != null || this.component.passwordField.getPassword() != null))
 			|| creds != null && (
 				!Objects.equals(creds.getUserName(), this.component.userNameField.getText())
 					|| !Objects.equals(creds.getPassword(), new OneTimeString(this.component.passwordField.getPassword()))
@@ -51,7 +45,6 @@ final class CodeMPSettingsConfigurable implements Configurable {
 	@Override
 	public void apply() {
 		CodeMPSettings.State state = Objects.requireNonNull(CodeMPSettings.getInstance().getState());
-		state.serverUrl = this.component.serverUrlField.getText();
 		state.setCredentials(new Credentials(
 			this.component.userNameField.getText(),
 			this.component.passwordField.getPassword()
@@ -61,8 +54,6 @@ final class CodeMPSettingsConfigurable implements Configurable {
 	@Override
 	public void reset() {
 		CodeMPSettings.State state = Objects.requireNonNull(CodeMPSettings.getInstance().getState());
-		this.component.serverUrlField.setText(state.serverUrl);
-
 		Credentials cred = state.getCredentials();
 		if(cred != null) {
 			this.component.userNameField.setText(cred.getUserName());
@@ -77,14 +68,12 @@ final class CodeMPSettingsConfigurable implements Configurable {
 
 	private static class Component {
 		final JPanel mainPanel;
-		final JBTextField serverUrlField = new JBTextField();
 		final JBTextField userNameField = new JBTextField();
 		final JBPasswordField passwordField = new JBPasswordField();
 
 		Component() {
 			this.mainPanel = FormBuilder.createFormBuilder()
 				.addComponent(new JBLabel("Connection").withFont(JBFont.h2().asBold()))
-				.addLabeledComponent(new JBLabel("Server address:"), this.serverUrlField, 1, false)
 				.addLabeledComponent(new JBLabel("Username:"), this.userNameField, 1, false)
 				.addLabeledComponent(new JBLabel("Password:"), this.passwordField, 1, false)
 				.addComponentFillVertically(new JPanel(), 0)

@@ -4,14 +4,9 @@ import com.intellij.credentialStore.Credentials;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.EditorEventMulticaster;
-import com.intellij.openapi.editor.markup.HighlighterLayer;
-import com.intellij.openapi.editor.markup.HighlighterTargetArea;
-import com.intellij.openapi.editor.markup.RangeHighlighter;
-import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -19,18 +14,16 @@ import com.intellij.openapi.project.Project;
 import mp.code.BufferController;
 import mp.code.Client;
 import mp.code.Workspace;
-import mp.code.data.Cursor;
 import mp.code.exceptions.ConnectionException;
 import mp.code.exceptions.ConnectionRemoteException;
-import mp.code.exceptions.ControllerException;
 import mp.code.intellij.CodeMP;
 import mp.code.intellij.listeners.BufferEventListener;
 import mp.code.intellij.listeners.CursorEventListener;
 import mp.code.intellij.settings.CodeMPSettings;
+import mp.code.intellij.util.cb.CursorCallback;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -51,14 +44,11 @@ public class InteractionUtil {
 						Objects.requireNonNull(credentials.getUserName()),
 						Objects.requireNonNull(credentials.getPasswordAsString())
 					);
+					MemoryManager.startClientLifetime();
 
 					if(after != null) after.run();
 
-					notifyInfo(
-						project,
-						"Success",
-						String.format("Connected to %s!", state.getServerUrl())
-					);
+					notifyInfo(project, "Success", "Connected to server!");
 				} catch(NullPointerException e) {
 					Notifications.Bus.notify(new Notification(
 						"CodeMP",
@@ -75,6 +65,7 @@ public class InteractionUtil {
 
 	public static void disconnect(@Nullable Project project) {
 		CodeMP.disconnect();
+		MemoryManager.endClientLifetime();
 		notifyInfo(project, "Success", "Disconnected from server!");
 	}
 
@@ -94,6 +85,7 @@ public class InteractionUtil {
 
 				try {
 					CodeMP.joinWorkspace(workspaceId);
+					MemoryManager.startWorkspaceLifetime(workspaceId);
 				} catch(ConnectionException e) {
 					InteractionUtil.notifyError(project, String.format(
 						"Failed to join workspace %s!",
@@ -102,70 +94,16 @@ public class InteractionUtil {
 					return;
 				}
 
+				Disposable lifetime = MemoryManager.getWorkspaceLifetime(workspaceId);
+				assert lifetime != null; // can never fail
+
 				EditorEventMulticaster eventMulticaster = EditorFactory.getInstance().getEventMulticaster();
 
-				eventMulticaster.addDocumentListener(new BufferEventListener()); // TODO disposable
-				eventMulticaster.addCaretListener(new CursorEventListener()); // TODO disposable
+				eventMulticaster.addDocumentListener(new BufferEventListener(), lifetime);
+				eventMulticaster.addCaretListener(new CursorEventListener(), lifetime);
 
 				CodeMP.getActiveWorkspace().getCursor().callback(controller -> {
-					new Thread(() -> {
-						try {
-							while(true) {
-								Optional<Cursor> c = controller.tryRecv();
-								if(c.isEmpty()) break;
-								Cursor event = c.get();
-
-								CodeMP.LOGGER.debug(
-									"Cursor moved by user {}! Start pos: {}x {}y; end pos: {}x {}y in buffer {}!",
-									event.user,
-									event.startCol,
-									event.startRow,
-									event.endCol,
-									event.endRow,
-									event.buffer
-								);
-
-								try {
-									ApplicationManager.getApplication().runReadAction(() -> {
-										Editor editor = FileUtil.getActiveEditorByPath(this.myProject, event.buffer);
-										if(editor == null) return;
-
-										int startOffset = editor.getDocument().getLineStartOffset(event.startRow) + event.startCol;
-										int endOffset = editor.getDocument().getLineStartOffset(event.endRow) + event.endCol;
-
-										int documentLength = editor.getDocument().getTextLength();
-										if(startOffset > documentLength || endOffset > documentLength) {
-											CodeMP.LOGGER.debug(
-												"Out of bounds cursor: start was {}, end was {}, document length was {}!",
-												startOffset, endOffset, documentLength);
-											return;
-										}
-
-										RangeHighlighter previous = CodeMP.HIGHLIGHTER_MAP.put(
-											event.user,
-											editor.getMarkupModel().addRangeHighlighter(
-												startOffset,
-												endOffset,
-												HighlighterLayer.SELECTION,
-												new TextAttributes(
-													null,
-													ColorUtil.hashColor(event.user),
-													null,
-													null,
-													Font.PLAIN
-												),
-												HighlighterTargetArea.EXACT_RANGE
-											)
-										);
-
-										if(previous != null) previous.dispose();
-									});
-								} catch(IndexOutOfBoundsException ignored) {} // don't crash over a bad cursor event
-							}
-						} catch(ControllerException ex) {
-							notifyError(project, "Error receiving change", ex);
-						}
-					}).start();
+					new CursorCallback(this.myProject).accept(controller);
 				});
 
 				if(after != null) after.run();
@@ -181,6 +119,7 @@ public class InteractionUtil {
 
 	public static void leaveWorkspace(Project project, String workspaceId) {
 		CodeMP.leaveWorkspace();
+		MemoryManager.endWorkspaceLifetime(workspaceId);
 		notifyInfo(
 			project,
 			"Success",
@@ -201,12 +140,12 @@ public class InteractionUtil {
 	public static Optional<BufferController> bufferAttach(Project project, Workspace workspace, String path) {
 		try {
 			BufferController controller = workspace.attachToBuffer(path);
+			MemoryManager.startBufferLifetime(workspace.getWorkspaceId(), path);
 			notifyInfo(project, "Success!", String.format(
 				"Successfully attached to buffer %s on workspace %s!",
 				path,
 				workspace.getWorkspaceId())
 			);
-
 			return Optional.of(controller);
 		} catch(ConnectionException e) {
 			notifyError(project, "Failed to attach to buffer!", e);
@@ -214,13 +153,22 @@ public class InteractionUtil {
 		}
 	}
 
-	private static void notifyInfo(Project project, String title, String msg) {
+	public static void bufferCreate(Project project, String path) {
+		try {
+			Workspace workspace = CodeMP.getActiveWorkspace();
+			workspace.createBuffer(path);
+		} catch(ConnectionRemoteException e) {
+			notifyError(project, "Failed to create a buffer!", e);
+		}
+	}
+
+	public static void notifyInfo(Project project, String title, String msg) {
 		Notifications.Bus.notify(new Notification(
 			"CodeMP", title, msg, NotificationType.INFORMATION
 		), project);
 	}
 
-	private static void notifyError(Project project, String title, Throwable t) {
+	public static void notifyError(Project project, String title, Throwable t) {
 		Notifications.Bus.notify(new Notification(
 			"CodeMP", title,
 			String.format("%s: %s", t.getClass().getCanonicalName(), t.getMessage()),
