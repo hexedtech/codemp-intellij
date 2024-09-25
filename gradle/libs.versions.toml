@@ -1,0 +1,15 @@
+[versions]
+codemp = '0.7.0'
+lombok = '1.18.34'
+intellij-plugin = '2.0.1'
+git-version = '3.1.0'
+osdetector = '1.7.3'
+
+[plugins]
+intellij-plugin = { id = 'org.jetbrains.intellij.platform', version.ref = 'intellij-plugin' }
+git-version = { id = 'com.palantir.git-version', version.ref = 'git-version' }
+osdetector = { id = 'com.google.osdetector', version.ref = 'osdetector' }
+
+[libraries]
+codemp = { group = 'mp.code', name = 'codemp', version.ref = 'codemp' }
+lombok = { group = 'org.projectlombok', name = 'lombok', version.ref = 'lombok' }

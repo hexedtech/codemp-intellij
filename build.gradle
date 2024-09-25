@@ -1,11 +1,12 @@
 plugins {
 	id 'java'
-	id 'org.jetbrains.intellij.platform' version '2.0.1'
-	id 'com.palantir.git-version' version '3.1.0'
+	alias libs.plugins.intellij.plugin
+	alias libs.plugins.git.version
+	alias libs.plugins.osdetector
 }
 
 group = 'mp.code'
-version = versionDetails().lastTag
+//version = versionDetails().lastTag
 
 java {
 	sourceCompatibility = targetCompatibility = JavaVersion.VERSION_17
@@ -13,18 +14,18 @@ java {
 
 repositories {
 	mavenCentral()
-	maven { url 'https://jitpack.io' }
 	intellijPlatform {
 		defaultRepositories()
 	}
 }
 
 dependencies {
-	implementation 'org.slf4j:slf4j-api:2.0.9'
-	implementation 'ch.qos.logback:logback-classic:1.4.12'
-	implementation 'mp.code:codemp:0.7.0:linux-x86_64'
-	compileOnly 'org.projectlombok:lombok:1.18.34'
-	annotationProcessor 'org.projectlombok:lombok:1.18.34'
+	implementation variantOf(libs.codemp) {
+		classifier osdetector.classifier
+	}
+
+	compileOnly libs.lombok
+	annotationProcessor libs.lombok
 
 	intellijPlatform { // TODO: not all of these may be needed, but whatever
 		intellijIdeaCommunity('2023.3')

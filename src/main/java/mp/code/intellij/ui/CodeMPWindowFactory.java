@@ -1,18 +1,16 @@
 package mp.code.intellij.ui;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowFactory;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.treeStructure.Tree;
-import mp.code.data.TextChange;
-import mp.code.exceptions.ControllerException;
 import mp.code.intellij.CodeMP;
+import mp.code.intellij.util.cb.BufferCallback;
 import mp.code.intellij.util.FileUtil;
 import mp.code.intellij.util.InteractionUtil;
 import org.jetbrains.annotations.NotNull;
@@ -23,8 +21,6 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.MouseEvent;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Optional;
 
 public class CodeMPToolWindowFactory implements ToolWindowFactory, DumbAware {
@@ -102,6 +98,20 @@ public class CodeMPToolWindowFactory implements ToolWindowFactory, DumbAware {
 					this.add(tree);
 				}
 				case JOINED -> {
+					JButton createButton = new JButton(new AbstractAction("Create buffer") {
+						@Override
+						public void actionPerformed(ActionEvent e) {
+							String bufferPath = Messages.showInputDialog(
+								"Name of buffer:",
+								"CodeMP Buffer Create",
+								Messages.getQuestionIcon()
+							);
+
+							InteractionUtil.bufferCreate(project, bufferPath);
+							CodeMPToolWindow.this.redraw(project);
+						}
+					});
+
 					JTree tree = drawTree(CodeMP.getActiveWorkspace().getFileTree(Optional.empty(), false));
 					tree.addMouseListener(new SimpleMouseListener() {
 						@Override
@@ -124,46 +134,11 @@ public class CodeMPToolWindowFactory implements ToolWindowFactory, DumbAware {
 										throw new RuntimeException(ex);
 									}
 								});
-								controller.callback(bufferController -> {
-									ApplicationManager.getApplication().runReadAction(() -> {
-										Editor editor = FileUtil.getActiveEditorByPath(project, bufferController.getName());
-										ApplicationManager.getApplication().invokeLaterOnWriteThread(() -> {
-											List<TextChange> changeList = new ArrayList<>();
-											while(true) {
-												Optional<TextChange> changeOptional;
-												try {
-													changeOptional = bufferController.tryRecv();
-												} catch(ControllerException ex) {
-													throw new RuntimeException(ex);
-												}
-
-												if(changeOptional.isEmpty())
-													break;
-												TextChange change = changeOptional.get();
-												CodeMP.LOGGER.debug("Received text change {} from offset {} to {}!",
-													change.content, change.start, change.end);
-												changeList.add(change);
-											}
-
-											ApplicationManager.getApplication().runWriteAction(() ->
-												CommandProcessor.getInstance().executeCommand(
-													project,
-													() -> changeList.forEach((change) ->
-														editor.getDocument().replaceString(
-															(int) change.start, (int) change.end, change.content)
-													),
-													"CodeMPBufferReceive",
-													"codemp-buffer-receive",
-													editor.getDocument()
-												)
-											);
-										});
-									});
-
-								});
+								controller.callback(buf -> new BufferCallback(project).accept(buf));
 							});
 						}
 					});
+					this.add(createButton);
 					this.add(tree);
 				}
 			}
