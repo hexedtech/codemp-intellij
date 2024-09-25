@@ -6,6 +6,7 @@ import com.google.common.collect.Maps;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import mp.code.Extensions;
 import mp.code.Workspace;
+import mp.code.data.Config;
 import mp.code.exceptions.ConnectionException;
 import mp.code.intellij.exceptions.ide.NotConnectedException;
 import mp.code.Client;
@@ -26,7 +27,7 @@ public class CodeMP {
 	public static final Map<String, RangeHighlighter> HIGHLIGHTER_MAP = new ConcurrentHashMap<>();
 
 	public static void connect(String username, String password) throws ConnectionException {
-		CLIENT = Client.connectToServer(username, password, "api.codemp.dev", 50053, false); // TODO don't hardcode
+		CLIENT = Client.connect(new Config(username, password, "api.codemp.dev", 50053, false)); // TODO don't hardcode
 		new Thread(() -> Extensions.drive(true)).start();
 	}
 

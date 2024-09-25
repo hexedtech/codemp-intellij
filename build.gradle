@@ -1,12 +1,11 @@
 plugins {
 	id 'java'
 	id 'org.jetbrains.intellij.platform' version '2.0.1'
-	id 'com.github.johnrengelman.shadow' version '8.1.1'
 	id 'com.palantir.git-version' version '3.1.0'
 }
 
 group = 'mp.code'
-//version = versionDetails().lastTag
+version = versionDetails().lastTag
 
 java {
 	sourceCompatibility = targetCompatibility = JavaVersion.VERSION_17
@@ -23,7 +22,7 @@ repositories {
 dependencies {
 	implementation 'org.slf4j:slf4j-api:2.0.9'
 	implementation 'ch.qos.logback:logback-classic:1.4.12'
-	implementation files('../../lib/dist/java/build/libs/codemp-0.6.2.jar')
+	implementation 'mp.code:codemp:0.7.0:linux-x86_64'
 	compileOnly 'org.projectlombok:lombok:1.18.34'
 	annotationProcessor 'org.projectlombok:lombok:1.18.34'
 
@@ -33,13 +32,6 @@ dependencies {
 		pluginVerifier()
 		zipSigner()
 		instrumentationTools()
-	}
-}
-
-shadowJar {
-	archiveClassifier.set('')
-	dependencies {
-		include(dependency(files('../../lib/java/build/libs/codemp-0.6.2.jar')))
 	}
 }
 
@@ -62,5 +54,3 @@ tasks {
 
 // useful for debugging
 runIde.doFirst { environment 'RUST_BACKTRACE', 'full' }
-
-build.dependsOn shadowJar
