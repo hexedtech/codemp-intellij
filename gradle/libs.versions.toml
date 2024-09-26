@@ -1,5 +1,5 @@
 [versions]
-codemp = '0.7.0'
+codemp = '0.7.2'
 lombok = '1.18.34'
 intellij-plugin = '2.0.1'
 git-version = '3.1.0'

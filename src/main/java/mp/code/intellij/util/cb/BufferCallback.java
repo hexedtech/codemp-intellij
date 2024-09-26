@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import lombok.RequiredArgsConstructor;
 import mp.code.BufferController;
+import mp.code.Extensions;
 import mp.code.data.TextChange;
 import mp.code.exceptions.ControllerException;
 import mp.code.intellij.CodeMP;
@@ -46,18 +47,23 @@ public class BufferCallback implements Consumer<BufferController> {
 						changeList.add(change);
 					}
 
-					ApplicationManager.getApplication().runWriteAction(() ->
+					ApplicationManager.getApplication().runWriteAction(() -> {
 						CommandProcessor.getInstance().executeCommand(
 							this.project,
-							() -> changeList.forEach((change) ->
-								editor.getDocument().replaceString(
-									(int) change.start, (int) change.end, change.content)
-							),
+							() -> changeList.forEach((change) -> {
+								editor.getDocument().replaceString((int) change.start, (int) change.end, change.content);
+								// check for validity, force-sync if mismatch
+								if(change.hash.isPresent() && change.hash.getAsLong() != Extensions.hash(editor.getDocument().getText())) {
+									try {
+										editor.getDocument().setText(bufferController.getContent());
+									} catch(ControllerException ignored) {} // ignore exception
+								}
+							}),
 							"CodeMPBufferReceive",
 							"codemp-buffer-receive",
 							editor.getDocument()
-						)
-					);
+						);
+					});
 				});
 			});
 		});
