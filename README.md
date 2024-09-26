@@ -13,6 +13,8 @@ as well as a remote virtual workspace for you and your team.
 This is the reference `codemp` [IntelliJ Platform](https://www.jetbrains.com/opensource/idea/) plugin,
 maintained by [hexedtech](https://hexed.technology).
 
+> Compare cross-editor development status with our [feature comparison matrix](https://github.com/orgs/hexedtech/projects/3)!
+
 ## Testing
 As this is not meant to be used yet, we do not provide build instructions.
 
