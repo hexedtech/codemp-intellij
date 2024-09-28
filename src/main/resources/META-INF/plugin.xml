@@ -12,8 +12,14 @@
             <add-to-group group-id="ToolsMenu" anchor="first"/>
 				<action id="codemp.connect" class="mp.code.intellij.actions.ConnectAction" text="Connect"/>
 			<action id="codemp.disconnect" class="mp.code.intellij.actions.DisconnectAction" text="Disconnect"/>
+			<action id="codemp.workspace.create" class="mp.code.intellij.actions.workspace.WorkspaceCreateAction"
+				text="Create Workspace"/>
 			<action id="codemp.workspace.join" class="mp.code.intellij.actions.workspace.WorkspaceJoinAction"
 				text="Join Workspace"/>
+			<action id="codemp.workspace.invite" class="mp.code.intellij.actions.workspace.WorkspaceInviteAction"
+				text="Invite To Workspace"/>
+			<action id="codemp.workspace.delete" class="mp.code.intellij.actions.workspace.WorkspaceDeleteAction"
+				text="Delete Workspace"/>
 			<action id="codemp.workspace.leave" class="mp.code.intellij.actions.workspace.WorkspaceLeaveAction"
 				text="Leave Workspace"/>
         </group>

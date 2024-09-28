@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
 public class WorkspaceJoinAction extends AnAction {
 	@Override
 	public void actionPerformed(@NotNull AnActionEvent e) {
-		String[] availableWorkspaces = InteractionUtil.listWorkspaces(e.getProject());
+		String[] availableWorkspaces = InteractionUtil.listWorkspaces(e.getProject(), true, true);
 		if(availableWorkspaces.length == 0) {
 			Messages.showErrorDialog(
 				"There are no available workspaces. Ensure you have rights to access at least one!",

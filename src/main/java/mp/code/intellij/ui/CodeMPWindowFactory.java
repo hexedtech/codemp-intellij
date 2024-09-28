@@ -81,7 +81,7 @@ public class CodeMPWindowFactory implements ToolWindowFactory, DumbAware {
 				}
 				case CONNECTED -> {
 					this.setLayout(new GridLayout(0, 1));
-					JTree tree = drawTree(InteractionUtil.listWorkspaces(project));
+					JTree tree = drawTree(InteractionUtil.listWorkspaces(project, true, true));
 					tree.addMouseListener(new SimpleMouseListener() {
 						@Override
 						public void mouseClicked(MouseEvent e) {

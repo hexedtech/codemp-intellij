@@ -69,6 +69,70 @@ public class InteractionUtil {
 		notifyInfo(project, "Success", "Disconnected from server!");
 	}
 
+	public static void createWorkspace(Project project, @NotNull String workspaceId, @Nullable Runnable after) {
+		ProgressManager.getInstance().run(new Task.Backgroundable(project, String.format("Creating workspace %s...", workspaceId)) {
+			@Override
+			public void run(@NotNull ProgressIndicator indicator) {
+				if(project == null) {
+					Notifications.Bus.notify(new Notification(
+						"CodeMP",
+						"No project found",
+						"Please ensure that you have an open project before attempting to create a workspace.",
+						NotificationType.ERROR
+					), null);
+					return;
+				}
+
+				try {
+					CodeMP.getClient("workspace create").createWorkspace(workspaceId);
+					if(after != null) after.run();
+					notifyInfo(
+						project,
+						"Success",
+						String.format("Created workspace %s!", workspaceId)
+					);
+				} catch(ConnectionException e) {
+					InteractionUtil.notifyError(project, String.format(
+						"Failed to create workspace %s!",
+						workspaceId
+					), e);
+				}
+			}
+		});
+	}
+
+	public static void inviteToWorkspace(Project project, @NotNull String workspaceId, @NotNull String userName, @Nullable Runnable after) {
+		ProgressManager.getInstance().run(new Task.Backgroundable(project, String.format("Inviting %s to workspace %s...", userName, workspaceId)) {
+			@Override
+			public void run(@NotNull ProgressIndicator indicator) {
+				if(project == null) {
+					Notifications.Bus.notify(new Notification(
+						"CodeMP",
+						"No project found",
+						"Please ensure that you have an open project before attempting to join a workspace.",
+						NotificationType.ERROR
+					), null);
+					return;
+				}
+
+				try {
+					CodeMP.getClient("workspace invite").inviteToWorkspace(workspaceId, userName);
+					if(after != null) after.run();
+					notifyInfo(
+						project,
+						"Success",
+						String.format("Joined workspace %s!", workspaceId)
+					);
+				} catch(ConnectionException e) {
+					InteractionUtil.notifyError(project, String.format(
+						"Failed to invite to workspace %s!",
+						workspaceId
+					), e);
+				}
+			}
+		});
+	}
+
 	public static void joinWorkspace(Project project, @NotNull String workspaceId, @Nullable Runnable after) {
 		ProgressManager.getInstance().run(new Task.Backgroundable(project, String.format("Joining workspace %s...", workspaceId)) {
 			@Override
@@ -117,6 +181,47 @@ public class InteractionUtil {
 		});
 	}
 
+	public static void deleteWorkspace(Project project, @NotNull String workspaceId, @Nullable Runnable after) {
+		ProgressManager.getInstance().run(new Task.Backgroundable(project, String.format("Deleting workspace %s...", workspaceId)) {
+			@Override
+			public void run(@NotNull ProgressIndicator indicator) {
+				if(project == null) {
+					Notifications.Bus.notify(new Notification(
+						"CodeMP",
+						"No project found",
+						"Please ensure that you have an open project before attempting to delete a workspace.",
+						NotificationType.ERROR
+					), null);
+					return;
+				}
+
+				try {
+					Client client = CodeMP.getClient("workspace delete");
+					client.deleteWorkspace(workspaceId);
+
+					Optional<Workspace> ws = client.getWorkspace("workspace leave");
+					if(ws.isPresent() && ws.get().getWorkspaceId().equals(workspaceId)) {
+						CodeMP.leaveWorkspace();
+						MemoryManager.startWorkspaceLifetime(workspaceId);
+					}
+
+					if(after != null) after.run();
+
+					notifyInfo(
+						project,
+						"Success",
+						String.format("Joined workspace %s!", workspaceId)
+					);
+				} catch(ConnectionException e) {
+					InteractionUtil.notifyError(project, String.format(
+						"Failed to join workspace %s!",
+						workspaceId
+					), e);
+				}
+			}
+		});
+	}
+
 	public static void leaveWorkspace(Project project, String workspaceId) {
 		CodeMP.leaveWorkspace();
 		MemoryManager.endWorkspaceLifetime(workspaceId);
@@ -127,10 +232,10 @@ public class InteractionUtil {
 		);
 	}
 
-	public static String[] listWorkspaces(Project project) {
+	public static String[] listWorkspaces(Project project, boolean owned, boolean invited) {
 		try {
 			Client client = CodeMP.getClient("drawActiveWorkspaces");
-			return client.listWorkspaces(true, true);
+			return client.listWorkspaces(owned, invited);
 		} catch(ConnectionRemoteException exception) {
 			notifyError(project, "Failed to list workspaces!", exception);
 			return new String[0];
