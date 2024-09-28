@@ -16,7 +16,7 @@ public class WorkspaceLeaveAction extends AnAction {
 			"CodeMP Workspace Leave",
 			Messages.getQuestionIcon());
 
-		InteractionUtil.leaveWorkspace(e.getProject(), workspaceId);
+		InteractionUtil.leaveWorkspace(e.getProject(), workspaceId, null);
 	}
 
 	@Override

@@ -15,6 +15,7 @@ public class WorkspaceDeleteAction extends AnAction {
 				"You do not own any workspaces. Ensure you own at least one!",
 				"CodeMP Delete Workspace"
 			);
+			return;
 		}
 
 		int choice = Messages.showDialog( // TODO NOT THE ONE

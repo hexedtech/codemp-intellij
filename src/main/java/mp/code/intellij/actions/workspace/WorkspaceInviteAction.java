@@ -19,6 +19,7 @@ public class WorkspaceInviteAction extends AnAction {
 				"You do not own any workspaces. Ensure you own at least one!",
 				"CodeMP Invite To Workspace"
 			);
+			return;
 		}
 
 		int choice = Messages.showDialog( // TODO NOT THE ONE

@@ -13,6 +13,7 @@ import mp.code.data.TextChange;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
+import java.util.Optional;
 import java.util.OptionalLong;
 
 public class BufferEventListener implements DocumentListener {
@@ -37,19 +38,21 @@ public class BufferEventListener implements DocumentListener {
 
 		if(file == null) return;
 
-		CodeMP.getActiveWorkspace().getBuffer(CodeMP.BUFFER_MAPPER.get(file.toNioPath())).ifPresent(controller -> {
-			int changeOffset = event.getOffset();
-			CharSequence newFragment = event.getNewFragment();
-			try {
-				controller.send(new TextChange(
-					changeOffset,
-					changeOffset + event.getOldFragment().length(),
-					newFragment.toString(),
-					OptionalLong.empty()
-				));
-			} catch(ControllerException e) {
-				throw new RuntimeException(e);
-			}
-		});
+		Optional.ofNullable(CodeMP.BUFFER_MAPPER.get(file.toNioPath()))
+			.flatMap(c -> CodeMP.getActiveWorkspace().getBuffer(c))
+			.ifPresent(controller -> {
+				int changeOffset = event.getOffset();
+				CharSequence newFragment = event.getNewFragment();
+				try {
+					controller.send(new TextChange(
+						changeOffset,
+						changeOffset + event.getOldFragment().length(),
+						newFragment.toString(),
+						OptionalLong.empty()
+					));
+				} catch(ControllerException e) {
+					throw new RuntimeException(e);
+				}
+			});
 	}
 }

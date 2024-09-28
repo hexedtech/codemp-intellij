@@ -11,6 +11,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.wm.ToolWindowManager;
 import mp.code.BufferController;
 import mp.code.Client;
 import mp.code.Workspace;
@@ -20,6 +21,7 @@ import mp.code.intellij.CodeMP;
 import mp.code.intellij.listeners.BufferEventListener;
 import mp.code.intellij.listeners.CursorEventListener;
 import mp.code.intellij.settings.CodeMPSettings;
+import mp.code.intellij.ui.CodeMPToolWindow;
 import mp.code.intellij.util.cb.CursorCallback;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,7 +35,7 @@ import java.util.Optional;
  * like notifications and error handling.
  */
 public class InteractionUtil {
-	public static void connect(@Nullable Project project, @Nullable Runnable after) {
+	public static void connect(@NotNull Project project, @Nullable Runnable after) {
 		ProgressManager.getInstance().run(new Task.Backgroundable(project, "Connecting to CodeMP server...") {
 			@Override
 			public void run(@NotNull ProgressIndicator indicator) {
@@ -48,6 +50,7 @@ public class InteractionUtil {
 
 					if(after != null) after.run();
 
+					refreshToolWindow(project);
 					notifyInfo(project, "Success", "Connected to server!");
 				} catch(NullPointerException e) {
 					Notifications.Bus.notify(new Notification(
@@ -63,29 +66,21 @@ public class InteractionUtil {
 		});
 	}
 
-	public static void disconnect(@Nullable Project project) {
+	public static void disconnect(@NotNull Project project) {
 		CodeMP.disconnect();
 		MemoryManager.endClientLifetime();
+		refreshToolWindow(project);
 		notifyInfo(project, "Success", "Disconnected from server!");
 	}
 
-	public static void createWorkspace(Project project, @NotNull String workspaceId, @Nullable Runnable after) {
+	public static void createWorkspace(@NotNull Project project, @NotNull String workspaceId, @Nullable Runnable after) {
 		ProgressManager.getInstance().run(new Task.Backgroundable(project, String.format("Creating workspace %s...", workspaceId)) {
 			@Override
 			public void run(@NotNull ProgressIndicator indicator) {
-				if(project == null) {
-					Notifications.Bus.notify(new Notification(
-						"CodeMP",
-						"No project found",
-						"Please ensure that you have an open project before attempting to create a workspace.",
-						NotificationType.ERROR
-					), null);
-					return;
-				}
-
 				try {
 					CodeMP.getClient("workspace create").createWorkspace(workspaceId);
 					if(after != null) after.run();
+					refreshToolWindow(project);
 					notifyInfo(
 						project,
 						"Success",
@@ -101,27 +96,18 @@ public class InteractionUtil {
 		});
 	}
 
-	public static void inviteToWorkspace(Project project, @NotNull String workspaceId, @NotNull String userName, @Nullable Runnable after) {
+	public static void inviteToWorkspace(@NotNull Project project, @NotNull String workspaceId, @NotNull String userName, @Nullable Runnable after) {
 		ProgressManager.getInstance().run(new Task.Backgroundable(project, String.format("Inviting %s to workspace %s...", userName, workspaceId)) {
 			@Override
 			public void run(@NotNull ProgressIndicator indicator) {
-				if(project == null) {
-					Notifications.Bus.notify(new Notification(
-						"CodeMP",
-						"No project found",
-						"Please ensure that you have an open project before attempting to join a workspace.",
-						NotificationType.ERROR
-					), null);
-					return;
-				}
-
 				try {
 					CodeMP.getClient("workspace invite").inviteToWorkspace(workspaceId, userName);
 					if(after != null) after.run();
+					refreshToolWindow(project);
 					notifyInfo(
 						project,
 						"Success",
-						String.format("Joined workspace %s!", workspaceId)
+						String.format("Invited %s to workspace %s!", userName, workspaceId)
 					);
 				} catch(ConnectionException e) {
 					InteractionUtil.notifyError(project, String.format(
@@ -133,23 +119,14 @@ public class InteractionUtil {
 		});
 	}
 
-	public static void joinWorkspace(Project project, @NotNull String workspaceId, @Nullable Runnable after) {
+	public static void joinWorkspace(@NotNull Project project, @NotNull String workspaceId, @Nullable Runnable after) {
 		ProgressManager.getInstance().run(new Task.Backgroundable(project, String.format("Joining workspace %s...", workspaceId)) {
 			@Override
 			public void run(@NotNull ProgressIndicator indicator) {
-				if(project == null) {
-					Notifications.Bus.notify(new Notification(
-						"CodeMP",
-						"No project found",
-						"Please ensure that you have an open project before attempting to join a workspace.",
-						NotificationType.ERROR
-					), null);
-					return;
-				}
-
 				try {
 					CodeMP.joinWorkspace(workspaceId);
 					MemoryManager.startWorkspaceLifetime(workspaceId);
+					refreshToolWindow(project);
 				} catch(ConnectionException e) {
 					InteractionUtil.notifyError(project, String.format(
 						"Failed to join workspace %s!",
@@ -181,20 +158,10 @@ public class InteractionUtil {
 		});
 	}
 
-	public static void deleteWorkspace(Project project, @NotNull String workspaceId, @Nullable Runnable after) {
+	public static void deleteWorkspace(@NotNull Project project, @NotNull String workspaceId, @Nullable Runnable after) {
 		ProgressManager.getInstance().run(new Task.Backgroundable(project, String.format("Deleting workspace %s...", workspaceId)) {
 			@Override
 			public void run(@NotNull ProgressIndicator indicator) {
-				if(project == null) {
-					Notifications.Bus.notify(new Notification(
-						"CodeMP",
-						"No project found",
-						"Please ensure that you have an open project before attempting to delete a workspace.",
-						NotificationType.ERROR
-					), null);
-					return;
-				}
-
 				try {
 					Client client = CodeMP.getClient("workspace delete");
 					client.deleteWorkspace(workspaceId);
@@ -202,10 +169,12 @@ public class InteractionUtil {
 					Optional<Workspace> ws = client.getWorkspace("workspace leave");
 					if(ws.isPresent() && ws.get().getWorkspaceId().equals(workspaceId)) {
 						CodeMP.leaveWorkspace();
-						MemoryManager.startWorkspaceLifetime(workspaceId);
+						MemoryManager.endWorkspaceLifetime(workspaceId);
 					}
 
 					if(after != null) after.run();
+
+					refreshToolWindow(project);
 
 					notifyInfo(
 						project,
@@ -222,14 +191,21 @@ public class InteractionUtil {
 		});
 	}
 
-	public static void leaveWorkspace(Project project, String workspaceId) {
-		CodeMP.leaveWorkspace();
-		MemoryManager.endWorkspaceLifetime(workspaceId);
-		notifyInfo(
-			project,
-			"Success",
-			String.format("Left workspace %s!", workspaceId)
-		);
+	public static void leaveWorkspace(@NotNull Project project, @NotNull String workspaceId, @Nullable Runnable after) {
+		ProgressManager.getInstance().run(new Task.Backgroundable(project, String.format("Leaving workspace %s...", workspaceId)) {
+			@Override
+			public void run(@NotNull ProgressIndicator indicator) {
+				CodeMP.leaveWorkspace();
+				MemoryManager.endWorkspaceLifetime(workspaceId);
+				if(after != null) after.run();
+				refreshToolWindow(project);
+				notifyInfo(
+					project,
+					"Success",
+					String.format("Left workspace %s!", workspaceId)
+				);
+			}
+		});
 	}
 
 	public static String[] listWorkspaces(Project project, boolean owned, boolean invited) {
@@ -258,10 +234,11 @@ public class InteractionUtil {
 		}
 	}
 
-	public static void bufferCreate(Project project, String path) {
+	public static void createBuffer(Project project, String path) {
 		try {
 			Workspace workspace = CodeMP.getActiveWorkspace();
 			workspace.createBuffer(path);
+			refreshToolWindow(project);
 		} catch(ConnectionRemoteException e) {
 			notifyError(project, "Failed to create a buffer!", e);
 		}
@@ -280,5 +257,11 @@ public class InteractionUtil {
 			NotificationType.ERROR
 		), project);
 		CodeMP.LOGGER.error(title, t);
+	}
+
+	public static void refreshToolWindow(Project project) {
+		CodeMPToolWindow w = (CodeMPToolWindow) ToolWindowManager.getInstance(project).getToolWindow("CodeMP");
+		if(w == null) return;
+		w.redraw(project);
 	}
 }

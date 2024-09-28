@@ -17,6 +17,7 @@ public class WorkspaceJoinAction extends AnAction {
 				"There are no available workspaces. Ensure you have rights to access at least one!",
 				"CodeMP Join Workspace"
 			);
+			return;
 		}
 
 		int choice = Messages.showDialog( // TODO NOT THE ONE
