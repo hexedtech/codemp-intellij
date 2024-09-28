@@ -47,8 +47,11 @@ public class FileUtil {
 		if(found == null) {
 			VirtualFile lastParent = contentRoot;
 			String[] path = bufferName.split("/");
-			for(int i = 0; i < path.length - 1; i++)
-				lastParent = lastParent.createChildDirectory(requestor, path[i]);
+			for(int i = 0; i < path.length - 1; i++) {
+				VirtualFile current = lastParent.findChild(path[i]);
+				if(current == null) current = lastParent.createChildDirectory(requestor, path[i]);
+				lastParent = current;
+			}
 			found = lastParent.createChildData(requestor, path[path.length - 1]);
 		}
 

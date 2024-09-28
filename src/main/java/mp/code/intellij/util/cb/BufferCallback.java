@@ -53,6 +53,7 @@ public class BufferCallback implements Consumer<BufferController> {
 							() -> changeList.forEach((change) -> {
 								editor.getDocument().replaceString((int) change.start, (int) change.end, change.content);
 								// check for validity, force-sync if mismatch
+								// TODO: prompt instead of doing it silently
 								if(change.hash.isPresent() && change.hash.getAsLong() != Extensions.hash(editor.getDocument().getText())) {
 									try {
 										editor.getDocument().setText(bufferController.getContent());
