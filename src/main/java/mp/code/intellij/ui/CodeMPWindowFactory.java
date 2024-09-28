@@ -17,7 +17,7 @@ public class CodeMPWindowFactory implements ToolWindowFactory, DumbAware {
 	) {
 		ContentFactory contentFactory = ContentFactory.getInstance();
 		Content content = contentFactory.createContent(
-			new CodeMPToolWindow(project),
+			new CodeMPToolPanel(project),
 			"",
 			false
 		);

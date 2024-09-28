@@ -48,7 +48,7 @@
 			displayName="CodeMP"/>
 		<workspaceModel.fileIndexContributor implementation="mp.code.intellij.vfs.CodeMPFileIndexContributor" />
 		<toolWindow
-				id="CodeMP"
+				id="CodeMPToolWindow"
 				factoryClass="mp.code.intellij.ui.CodeMPWindowFactory"
 				anchor="right"
 				doNotActivateOnStart="false" />

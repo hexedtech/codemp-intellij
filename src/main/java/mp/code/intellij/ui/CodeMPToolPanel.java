@@ -17,8 +17,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.MouseEvent;
 import java.util.Optional;
 
-public class CodeMPToolWindow extends JPanel {
-	public CodeMPToolWindow(Project project) {
+public class CodeMPToolPanel extends JPanel {
+	public CodeMPToolPanel(Project project) {
 		this.draw(project);
 	}
 
@@ -34,7 +34,7 @@ public class CodeMPToolWindow extends JPanel {
 				JButton connectButton = new JButton(new AbstractAction("Connect...") {
 					@Override
 					public void actionPerformed(ActionEvent e) {
-						InteractionUtil.connect(project, () -> CodeMPToolWindow.this.redraw(project));
+						InteractionUtil.connect(project, () -> CodeMPToolPanel.this.redraw(project));
 					}
 				});
 				this.add(connectButton);
@@ -52,7 +52,7 @@ public class CodeMPToolWindow extends JPanel {
 						InteractionUtil.joinWorkspace(
 							project,
 							workspaceName,
-							() -> CodeMPToolWindow.this.redraw(project)
+							() -> CodeMPToolPanel.this.redraw(project)
 						);
 					}
 				});
@@ -69,7 +69,7 @@ public class CodeMPToolWindow extends JPanel {
 						);
 
 						InteractionUtil.createBuffer(project, bufferPath);
-						CodeMPToolWindow.this.redraw(project);
+						CodeMPToolPanel.this.redraw(project);
 					}
 				});
 				createButton.setSize(createButton.getPreferredSize());

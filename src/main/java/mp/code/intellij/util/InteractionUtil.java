@@ -21,7 +21,7 @@ import mp.code.intellij.CodeMP;
 import mp.code.intellij.listeners.BufferEventListener;
 import mp.code.intellij.listeners.CursorEventListener;
 import mp.code.intellij.settings.CodeMPSettings;
-import mp.code.intellij.ui.CodeMPToolWindow;
+import mp.code.intellij.ui.CodeMPToolPanel;
 import mp.code.intellij.util.cb.CursorCallback;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -260,7 +260,11 @@ public class InteractionUtil {
 	}
 
 	public static void refreshToolWindow(Project project) {
-		CodeMPToolWindow w = (CodeMPToolWindow) ToolWindowManager.getInstance(project).getToolWindow("CodeMP");
+		CodeMPToolPanel w = (CodeMPToolPanel) ToolWindowManager.getInstance(project)
+			.getToolWindow("CodeMPToolWindow")
+			.getContentManager()
+			.getContent(0)
+			.getComponent();
 		if(w == null) return;
 		w.redraw(project);
 	}
