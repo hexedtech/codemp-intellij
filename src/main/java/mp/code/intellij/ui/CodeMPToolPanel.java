@@ -4,6 +4,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.ui.treeStructure.Tree;
+
+import mp.code.Workspace;
 import mp.code.intellij.CodeMP;
 import mp.code.intellij.util.FileUtil;
 import mp.code.intellij.util.InteractionUtil;
@@ -41,7 +43,7 @@ public class CodeMPToolPanel extends JPanel {
 			}
 			case CONNECTED -> {
 				this.setLayout(new GridLayout(0, 1));
-				JTree tree = drawTree(InteractionUtil.listWorkspaces(project, true, true));
+				JTree tree = drawTree("all workspaces", InteractionUtil.listWorkspaces(project, true, true));
 				tree.addMouseListener(new SimpleMouseListener() {
 					@Override
 					public void mouseClicked(MouseEvent e) {
@@ -59,6 +61,7 @@ public class CodeMPToolPanel extends JPanel {
 				this.add(tree);
 			}
 			case JOINED -> {
+				this.setLayout(new BorderLayout(1, 0));
 				JButton createButton = new JButton(new AbstractAction("Create buffer") {
 					@Override
 					public void actionPerformed(ActionEvent e) {
@@ -72,9 +75,11 @@ public class CodeMPToolPanel extends JPanel {
 						CodeMPToolPanel.this.redraw(project);
 					}
 				});
-				createButton.setSize(createButton.getPreferredSize());
+				// createButton.setSize(createButton.getPreferredSize());
+				this.add(createButton, BorderLayout.NORTH);
 
-				JTree tree = drawTree(CodeMP.getActiveWorkspace().getFileTree(Optional.empty(), false));
+				Workspace ws = CodeMP.getActiveWorkspace();
+				JTree tree = drawTree(ws.getWorkspaceId(), ws.getFileTree(Optional.empty(), false));
 				tree.addMouseListener(new SimpleMouseListener() {
 					@Override
 					public void mouseClicked(MouseEvent e) {
@@ -102,14 +107,13 @@ public class CodeMPToolPanel extends JPanel {
 					}
 				});
 
-				this.add(createButton);
-				this.add(tree);
+				this.add(tree, BorderLayout.CENTER);
 			}
 		}
 	}
 
-	private JTree drawTree(String[] contents) {
-		DefaultMutableTreeNode root = new DefaultMutableTreeNode();
+	private JTree drawTree(String workspace, String[] contents) {
+		DefaultMutableTreeNode root = new DefaultMutableTreeNode(workspace);
 		for(String content : contents) {
 			root.add(new DefaultMutableTreeNode(content));
 		}
