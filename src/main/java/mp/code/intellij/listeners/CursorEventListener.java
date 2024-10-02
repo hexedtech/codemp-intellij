@@ -14,6 +14,9 @@ import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.event.CaretEvent;
 import com.intellij.openapi.editor.event.CaretListener;
 import mp.code.data.Cursor;
+
+import java.nio.file.Path;
+
 import org.jetbrains.annotations.NotNull;
 
 public class CursorEventListener implements CaretListener {
@@ -21,14 +24,21 @@ public class CursorEventListener implements CaretListener {
 	@Override
 	@SneakyThrows
 	public void caretPositionChanged(@NotNull CaretEvent event) {
+		// TODO instead of returning, should un-set remote cursor position (once)
+
 		Caret caret = event.getCaret();
-		if(caret == null)
-			return;
+		if (caret == null) return;
 
 		VirtualFile file = event.getEditor().getVirtualFile();
-		if(file == null) return;
+		if (file == null) return;
 
-		if(CodeMP.getActiveWorkspace().getBuffer(CodeMP.BUFFER_MAPPER.get(file.toNioPath())).isEmpty()) return;
+		Path nioPath = file.toNioPath();
+		if (nioPath == null) return;
+
+		String buffer_name = CodeMP.BUFFER_MAPPER.get(nioPath);
+		if (buffer_name == null) return;
+
+		if(CodeMP.getActiveWorkspace().getBuffer(buffer_name).isEmpty()) return;
 
 		VisualPosition startPos = caret.getSelectionStartPosition();
 		VisualPosition endPos = caret.getSelectionEndPosition();
