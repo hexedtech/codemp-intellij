@@ -108,6 +108,9 @@ public class CodeMPToolPanel extends JPanel {
 				});
 
 				this.add(tree, BorderLayout.CENTER);
+
+				JList userlist = new JList<String>(ws.userList());
+				this.add(userlist, BorderLayout.SOUTH);
 			}
 		}
 	}
