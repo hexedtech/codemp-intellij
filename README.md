@@ -8,7 +8,7 @@ as well as a remote virtual workspace for you and your team.
 
 # codemp-intellij
 > [!WARNING]
-> `codmep-intellij` is still under active development. It is not in a usable state yet, coming soon!
+> `codemp-intellij` is still under active development. It is not in a usable state yet, coming soon!
 
 This is the reference `codemp` [IntelliJ Platform](https://www.jetbrains.com/opensource/idea/) plugin,
 maintained by [hexedtech](https://hexed.technology).
