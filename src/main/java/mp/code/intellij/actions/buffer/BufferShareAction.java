@@ -71,4 +71,9 @@ public class BufferShareAction extends AnAction {
 			throw new RuntimeException(ex);
 		}
 	}
+
+	@Override
+	public void update(@NotNull AnActionEvent e) {
+		e.getPresentation().setEnabled(CodeMP.isInWorkspace());
+	}
 }

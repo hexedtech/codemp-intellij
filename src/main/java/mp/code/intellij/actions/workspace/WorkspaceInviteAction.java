@@ -47,4 +47,9 @@ public class WorkspaceInviteAction extends AnAction {
 
 		InteractionUtil.inviteToWorkspace(e.getProject(), availableWorkspaces[choice], userName, null);
 	}
+
+	@Override
+	public void update(@NotNull AnActionEvent e) {
+		e.getPresentation().setEnabled(CodeMP.isConnected());
+	}
 }

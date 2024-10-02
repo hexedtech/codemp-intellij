@@ -3,6 +3,8 @@ package mp.code.intellij.actions.workspace;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.ui.Messages;
+
+import mp.code.intellij.CodeMP;
 import mp.code.intellij.util.InteractionUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -28,5 +30,10 @@ public class WorkspaceDeleteAction extends AnAction {
 		);
 
 		InteractionUtil.deleteWorkspace(e.getProject(), availableWorkspaces[choice], null);
+	}
+
+	@Override
+	public void update(@NotNull AnActionEvent e) {
+		e.getPresentation().setEnabled(CodeMP.isConnected());
 	}
 }

@@ -30,6 +30,16 @@
 			<add-to-group group-id="codemp" anchor="first"/>
 			<action id="codemp.buffer.share" class="mp.code.intellij.actions.buffer.BufferShareAction"
 					text="Share Current Buffer"/>
+			<action id="codemp.buffer.attach" class="mp.code.intellij.actions.buffer.BufferAttachAction"
+					text="Attach to remote buffer"/>
+			<action id="codemp.buffer.detach" class="mp.code.intellij.actions.buffer.BufferDetachAction"
+					text="Detach from remote buffer"/>
+			<action id="codemp.buffer.create" class="mp.code.intellij.actions.buffer.BufferCreateAction"
+					text="Create a new empty remote buffer"/>
+			<action id="codemp.buffer.delete" class="mp.code.intellij.actions.buffer.BufferDeleteAction"
+					text="Delete a remote buffer"/>
+			<action id="codemp.buffer.sync" class="mp.code.intellij.actions.buffer.BufferSyncAction"
+					text="Sync content of a managed buffer"/>
 		</group>
 	</actions>
 
