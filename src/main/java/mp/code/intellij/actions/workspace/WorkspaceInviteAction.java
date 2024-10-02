@@ -1,5 +1,6 @@
 package mp.code.intellij.actions.workspace;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.ui.Messages;
@@ -51,5 +52,10 @@ public class WorkspaceInviteAction extends AnAction {
 	@Override
 	public void update(@NotNull AnActionEvent e) {
 		e.getPresentation().setEnabled(CodeMP.isConnected());
+	}
+
+	@Override
+	public @NotNull ActionUpdateThread getActionUpdateThread() {
+		return ActionUpdateThread.EDT;
 	}
 }
