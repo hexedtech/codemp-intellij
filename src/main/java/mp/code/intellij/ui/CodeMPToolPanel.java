@@ -3,9 +3,10 @@ package mp.code.intellij.ui;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.ui.components.JBList;
 import com.intellij.ui.treeStructure.Tree;
-
 import mp.code.Workspace;
+import mp.code.exceptions.ControllerException;
 import mp.code.intellij.CodeMP;
 import mp.code.intellij.util.FileUtil;
 import mp.code.intellij.util.InteractionUtil;
@@ -17,6 +18,7 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.MouseEvent;
+import java.io.IOException;
 import java.util.Optional;
 
 public class CodeMPToolPanel extends JPanel {
@@ -93,15 +95,14 @@ public class CodeMPToolPanel extends JPanel {
 						).ifPresent(controller -> {
 							try {
 								Thread.sleep(1000); // TODO: this sucks
-							} catch(InterruptedException ignored) {
-							}
+							} catch(InterruptedException ignored) {}
 							ApplicationManager.getApplication().runWriteAction(() -> {
 								try {
 									FileUtil.getAndRegisterBufferEquivalent(this, project, controller);
-								} catch(Exception ex) {
+								} catch(ControllerException | IOException ex) {
 									throw new RuntimeException(ex);
-								}
-							});
+								} catch(UnsupportedOperationException ignored) {}
+								});
 							controller.callback(buf -> new BufferCallback(project).accept(buf));
 						});
 					}
@@ -109,7 +110,7 @@ public class CodeMPToolPanel extends JPanel {
 
 				this.add(tree, BorderLayout.CENTER);
 
-				JList userlist = new JList<String>(ws.userList());
+				JList<String> userlist = new JBList<>(ws.userList());
 				this.add(userlist, BorderLayout.SOUTH);
 			}
 		}

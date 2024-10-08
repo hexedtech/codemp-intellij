@@ -42,8 +42,12 @@ public class BufferCallback implements Consumer<BufferController> {
 						if(changeOptional.isEmpty())
 							break;
 						TextChange change = changeOptional.get();
-						CodeMP.LOGGER.debug("Received text change {} from offset {} to {}!",
-							change.content, change.start, change.end);
+						CodeMP.LOGGER.debug(String.format(
+							"Received text change %s from offset %d to %d!",
+							change.content,
+							change.start,
+							change.end
+						));
 						changeList.add(change);
 					}
 

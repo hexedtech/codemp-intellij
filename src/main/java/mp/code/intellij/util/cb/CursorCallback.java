@@ -36,15 +36,15 @@ public class CursorCallback implements Consumer<CursorController> {
 					if(c.isEmpty()) break;
 					Cursor event = c.get();
 
-					CodeMP.LOGGER.debug(
-						"Cursor moved by user {}! Start pos: {}x {}y; end pos: {}x {}y in buffer {}!",
+					CodeMP.LOGGER.debug(String.format(
+						"Cursor moved by user %s! Start pos: %dx %dy; end pos: %dx %dy in buffer %s!",
 						event.user,
 						event.startCol,
 						event.startRow,
 						event.endCol,
 						event.endRow,
 						event.buffer
-					);
+					));
 
 					try {
 						ApplicationManager.getApplication().runReadAction(() -> {
@@ -56,9 +56,12 @@ public class CursorCallback implements Consumer<CursorController> {
 
 							int documentLength = editor.getDocument().getTextLength();
 							if(startOffset > documentLength || endOffset > documentLength) {
-								CodeMP.LOGGER.debug(
-									"Out of bounds cursor: start was {}, end was {}, document length was {}!",
-									startOffset, endOffset, documentLength);
+								CodeMP.LOGGER.debug(String.format(
+									"Out of bounds cursor: start was %d, end was %d, document length was %d!",
+									startOffset,
+									endOffset,
+									documentLength
+								));
 								return;
 							}
 

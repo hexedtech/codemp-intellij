@@ -39,7 +39,7 @@ public class FileUtil {
 			.orElse(null);
 	}
 
-	public static FileEditor getAndRegisterBufferEquivalent(Object requestor, Project project, BufferController buffer) throws ControllerException, IOException {
+	public static FileEditor getAndRegisterBufferEquivalent(Object requestor, Project project, BufferController buffer) throws UnsupportedOperationException, ControllerException, IOException {
 		VirtualFile contentRoot = ProjectRootManager.getInstance(project).getContentRoots()[0];
 		String bufferName = buffer.getName();
 

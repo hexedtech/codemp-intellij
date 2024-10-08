@@ -63,9 +63,9 @@ public class BufferShareAction extends AnAction {
 			ApplicationManager.getApplication().runWriteAction(() -> {
 				try {
 					FileUtil.getAndRegisterBufferEquivalent(this, proj, controller.get());
-				} catch(Exception ex) {
+				} catch(ControllerException | IOException ex) {
 					throw new RuntimeException(ex);
-				}
+				} catch(UnsupportedOperationException ignored) {}
 			});
 			controller.get().callback(buf -> new BufferCallback(proj).accept(buf));
 		} catch(ControllerException | IOException ex) {

@@ -1,7 +1,7 @@
 <idea-plugin>
     <id>mp.code.intellij</id>
 	<name>CodeMP</name>
-    <vendor email="me@zaaarf.foo" url="https://zaaarf.foo">CodeMP</vendor>
+    <vendor email="me@zaaarf.foo" url="https://code.mp">CodeMP</vendor>
 
     <description>A plugin for MultiPlayer code editing across different IDEs.</description>
 
@@ -31,15 +31,15 @@
 			<action id="codemp.buffer.share" class="mp.code.intellij.actions.buffer.BufferShareAction"
 					text="Share Current Buffer"/>
 			<action id="codemp.buffer.attach" class="mp.code.intellij.actions.buffer.BufferAttachAction"
-					text="Attach to remote buffer"/>
+					text="Attach to Remote Buffer"/>
 			<action id="codemp.buffer.detach" class="mp.code.intellij.actions.buffer.BufferDetachAction"
-					text="Detach from remote buffer"/>
+					text="Detach from Remote Buffer"/>
 			<action id="codemp.buffer.create" class="mp.code.intellij.actions.buffer.BufferCreateAction"
-					text="Create a new empty remote buffer"/>
+					text="Create a New Empty Remote Buffer"/>
 			<action id="codemp.buffer.delete" class="mp.code.intellij.actions.buffer.BufferDeleteAction"
-					text="Delete a remote buffer"/>
+					text="Delete a Remote Buffer"/>
 			<action id="codemp.buffer.sync" class="mp.code.intellij.actions.buffer.BufferSyncAction"
-					text="Sync content of a managed buffer"/>
+					text="Sync Content of a Managed Buffer"/>
 		</group>
 	</actions>
 
@@ -58,7 +58,7 @@
 			displayName="CodeMP"/>
 		<workspaceModel.fileIndexContributor implementation="mp.code.intellij.vfs.CodeMPFileIndexContributor" />
 		<toolWindow
-				id="CodeMPToolWindow"
+				id="CodeMP"
 				factoryClass="mp.code.intellij.ui.CodeMPWindowFactory"
 				anchor="right"
 				doNotActivateOnStart="false" />

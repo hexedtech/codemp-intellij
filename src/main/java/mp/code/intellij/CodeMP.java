@@ -3,6 +3,7 @@ package mp.code.intellij;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 import com.google.common.collect.Maps;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import mp.code.Extensions;
 import mp.code.Workspace;
@@ -10,15 +11,13 @@ import mp.code.data.Config;
 import mp.code.exceptions.ConnectionException;
 import mp.code.intellij.exceptions.ide.NotConnectedException;
 import mp.code.Client;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.nio.file.Path;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class CodeMP {
-	public static Logger LOGGER = LoggerFactory.getLogger(CodeMP.class);
+	public static final Logger LOGGER = Logger.getInstance(CodeMP.class);
 	private static Client CLIENT = null;
 	private static String ACTIVE_WORKSPACE_ID = null;
 

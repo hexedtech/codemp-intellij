@@ -21,8 +21,12 @@ public class BufferEventListener implements DocumentListener {
 	@Override
 	@SneakyThrows
 	public void documentChanged(@NotNull DocumentEvent event) {
-		CodeMP.LOGGER.debug("Changed {} to {} at offset {}",
-			event.getOldFragment(), event.getNewFragment(), event.getOffset());
+		CodeMP.LOGGER.debug(String.format(
+			"Changed %s to %s at offset %d",
+			event.getOldFragment(),
+			event.getNewFragment(),
+			event.getOffset()
+		));
 
 		Object group = CommandProcessor.getInstance().getCurrentCommandGroupId();
 		if(group instanceof String groupString)
@@ -36,7 +40,7 @@ public class BufferEventListener implements DocumentListener {
 			.findFirst()
 			.orElse(null);
 
-		if(file == null) return;
+		if(file == null || !file.isInLocalFileSystem()) return;
 
 		Optional.ofNullable(CodeMP.BUFFER_MAPPER.get(file.toNioPath()))
 			.flatMap(c -> CodeMP.getActiveWorkspace().getBuffer(c))
