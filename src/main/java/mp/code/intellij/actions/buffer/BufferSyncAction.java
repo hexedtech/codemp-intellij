@@ -21,15 +21,15 @@ public class BufferSyncAction extends AnAction {
 	public void actionPerformed(@NotNull AnActionEvent e) {
 		// TODO if current buffer is managed, sync that instead of making user choose
 
-		String[] active_buffers = CodeMP.getActiveWorkspace().activeBuffers();
+		String[] activeBuffers = CodeMP.getActiveWorkspace().activeBuffers();
 		int choice = Messages.showChooseDialog(
 			"Sync which buffer?",
 			"CodeMP Buffer Detach",
-			active_buffers,
+			activeBuffers,
 			"",
 			Messages.getQuestionIcon()
 		);
-		String path = active_buffers[choice];
+		String path = activeBuffers[choice];
 
 		Optional<BufferController> controller = CodeMP.getActiveWorkspace().getBuffer(path);
 		if (controller.isEmpty()) {

@@ -25,8 +25,6 @@
 						text="Leave Workspace"/>
 			</group>
 			<group id="codemp.buffer" text="Buffer" popup="true">
-				<action id="codemp.buffer.share" class="mp.code.intellij.actions.buffer.BufferShareAction"
-						text="Share Current Buffer"/>
 				<action id="codemp.buffer.attach" class="mp.code.intellij.actions.buffer.BufferAttachAction"
 						text="Attach to Remote Buffer"/>
 				<action id="codemp.buffer.detach" class="mp.code.intellij.actions.buffer.BufferDetachAction"

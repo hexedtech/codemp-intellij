@@ -1,11 +1,17 @@
 package mp.code.intellij.ui;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.treeStructure.Tree;
+import mp.code.BufferController;
 import mp.code.Workspace;
+import mp.code.data.TextChange;
 import mp.code.exceptions.ControllerException;
 import mp.code.intellij.CodeMP;
 import mp.code.intellij.util.FileUtil;
@@ -19,7 +25,10 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.MouseEvent;
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.OptionalLong;
 
 public class CodeMPToolPanel extends JPanel {
 	public CodeMPToolPanel(Project project) {
@@ -64,21 +73,60 @@ public class CodeMPToolPanel extends JPanel {
 			}
 			case JOINED -> {
 				this.setLayout(new BorderLayout(1, 0));
-				JButton createButton = new JButton(new AbstractAction("Create buffer") {
+				this.add(new JButton(new AbstractAction("Share buffer") {
 					@Override
 					public void actionPerformed(ActionEvent e) {
-						String bufferPath = Messages.showInputDialog(
-							"Name of buffer:",
-							"CodeMP Buffer Create",
-							Messages.getQuestionIcon()
-						);
+						Project proj = Objects.requireNonNull(project);
+						FileEditor currentEditor = FileEditorManager.getInstance(proj).getSelectedEditor();
+						if(currentEditor == null) {
+							Messages.showErrorDialog(
+								"No file is currently open!",
+								"CodeMP Buffer Share"
+							);
+							return;
+						}
 
-						InteractionUtil.createBuffer(project, bufferPath);
+						String path = FileUtil.getRelativePath(proj, currentEditor.getFile());
+						if(path == null) {
+							Messages.showErrorDialog(
+								"File must belong to project!",
+								"CodeMP Buffer Share"
+							);
+							return;
+						}
+
+						InteractionUtil.createBuffer(proj, path);
 						CodeMPToolPanel.this.redraw(project);
+						Optional<BufferController> controller = InteractionUtil.bufferAttach(proj, CodeMP.getActiveWorkspace(), path);
+						if(controller.isEmpty()) {
+							Messages.showErrorDialog(
+								"An unknown error has occurred!",
+								"CodeMP Buffer Share"
+							);
+							return;
+						}
+
+						try {
+							Editor ed = ((TextEditor) currentEditor).getEditor();
+							controller.get().send(new TextChange(
+								0,
+								0,
+								ed.getDocument().getText(),
+								OptionalLong.empty()
+							));
+							ApplicationManager.getApplication().runWriteAction(() -> {
+								try {
+									FileUtil.getAndRegisterBufferEquivalent(this, proj, controller.get());
+								} catch(ControllerException | IOException ex) {
+									throw new RuntimeException(ex);
+								} catch(UnsupportedOperationException ignored) {}
+							});
+							controller.get().callback(buf -> new BufferCallback(proj).accept(buf));
+						} catch(ControllerException ex) {
+							throw new RuntimeException(ex);
+						}
 					}
-				});
-				// createButton.setSize(createButton.getPreferredSize());
-				this.add(createButton, BorderLayout.NORTH);
+				}), BorderLayout.NORTH);
 
 				Workspace ws = CodeMP.getActiveWorkspace();
 				JTree tree = drawTree(ws.getWorkspaceId(), ws.getFileTree(Optional.empty(), false));
