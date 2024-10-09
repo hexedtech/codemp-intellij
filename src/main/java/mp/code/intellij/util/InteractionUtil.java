@@ -11,6 +11,8 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.ComponentContainer;
+import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import mp.code.BufferController;
 import mp.code.Client;
@@ -260,12 +262,10 @@ public class InteractionUtil {
 	}
 
 	public static void refreshToolWindow(Project project) {
-		CodeMPToolPanel w = (CodeMPToolPanel) ToolWindowManager.getInstance(project)
-			.getToolWindow("CodeMPToolWindow")
-			.getContentManager()
-			.getContent(0)
-			.getComponent();
-		if(w == null) return;
-		w.redraw(project);
+		Optional.ofNullable(ToolWindowManager.getInstance(project).getToolWindow("CodeMP"))
+			.map(ToolWindow::getContentManager)
+			.map(cm -> cm.getContent(0))
+			.map(ComponentContainer::getComponent)
+			.ifPresent(w -> ((CodeMPToolPanel) w).redraw(project));
 	}
 }
