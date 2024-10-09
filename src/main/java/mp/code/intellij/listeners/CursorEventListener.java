@@ -3,7 +3,6 @@ package mp.code.intellij.listeners;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.vfs.VirtualFile;
-import lombok.SneakyThrows;
 import mp.code.exceptions.ControllerException;
 import mp.code.intellij.CodeMP;
 import mp.code.intellij.util.FileUtil;
@@ -18,15 +17,14 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Optional;
 
 public class CursorEventListener implements CaretListener {
+	private boolean once = false;
 
 	@Override
-	@SneakyThrows
 	public void caretPositionChanged(@NotNull CaretEvent event) {
-		// TODO instead of returning, should un-set remote cursor position (once)
+		// TODO instead of returning, should un-set remote ursor position (once)
 
 		Caret caret = event.getCaret();
-		if (caret == null) return;
-
+		if(caret == null) return;
 
 		Editor editor = event.getEditor();
 		VirtualFile file = editor.getVirtualFile();
@@ -37,12 +35,25 @@ public class CursorEventListener implements CaretListener {
 				Optional.ofNullable(CodeMP.BUFFER_MAPPER.get(file.toNioPath()))
 					.flatMap(n -> CodeMP.getActiveWorkspace().getBuffer(n))
 					.isEmpty()
-			) return;
+			) {
+				if(!this.once) {
+					this.sendEmptyCursor();
+					this.once = true;
+				}
+
+				return;
+			}
 		} catch(UnsupportedOperationException ex) {
 			// probably won't be like this long term, but for now we work with real physical files
 			// so converting to nio path is always legal when it's the right file
+			if(!this.once) {
+				this.sendEmptyCursor();
+				this.once = true;
+			}
 			return;
 		}
+
+		this.once = false;
 
 		LogicalPosition startPos = editor.offsetToLogicalPosition(caret.getSelectionStart());
 		LogicalPosition endPos = editor.offsetToLogicalPosition(caret.getSelectionEnd());
@@ -65,6 +76,19 @@ public class CursorEventListener implements CaretListener {
 					FileUtil.getRelativePath(editor.getProject(), editor.getVirtualFile()),
 					null
 				));
+			} catch(ControllerException e) {
+				throw new RuntimeException(e);
+			}
+		})).start();
+	}
+
+	// temp fix
+	private void sendEmptyCursor() {
+		new Thread(() -> ApplicationManager.getApplication().runReadAction(() -> {
+			try {
+				CodeMP.getActiveWorkspace()
+					.getCursor()
+					.send(new Cursor(0, 0, 0, 0, "", null));
 			} catch(ControllerException e) {
 				throw new RuntimeException(e);
 			}
