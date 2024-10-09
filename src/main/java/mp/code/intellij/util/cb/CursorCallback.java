@@ -49,7 +49,11 @@ public class CursorCallback implements Consumer<CursorController> {
 					try {
 						ApplicationManager.getApplication().runReadAction(() -> {
 							Editor editor = FileUtil.getActiveEditorByPath(this.project, event.buffer);
-							if(editor == null) return;
+							if(editor == null) {
+								RangeHighlighter previous = CodeMP.HIGHLIGHTER_MAP.remove(event.user);
+								if(previous != null) previous.dispose();
+								return;
+							}
 
 							int startOffset = editor.getDocument().getLineStartOffset(event.startRow) + event.startCol;
 							int endOffset = editor.getDocument().getLineStartOffset(event.endRow) + event.endCol;

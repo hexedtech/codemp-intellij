@@ -23,7 +23,7 @@ public class BufferSyncAction extends AnAction {
 
 		String[] active_buffers = CodeMP.getActiveWorkspace().activeBuffers();
 		int choice = Messages.showChooseDialog(
-			"Detach from which buffer?",
+			"Sync which buffer?",
 			"CodeMP Buffer Detach",
 			active_buffers,
 			"",
