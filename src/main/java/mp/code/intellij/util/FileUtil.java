@@ -75,12 +75,12 @@ public class FileUtil {
 		return CodeMP.getClient("buffer access")
 			.getWorkspace(path.getWorkspaceName())
 			.flatMap(ws -> {
-				String[] matches = ws.getFileTree(Optional.of(path.getRealPath()), true);
+				String[] matches = ws.searchBuffers(Optional.of(path.getRealPath()));
 				if(matches.length == 0) return Optional.empty();
 				Optional<BufferController> controller = ws.getBuffer(path.getRealPath());
 				if(controller.isPresent()) return controller;
 				try {
-					return Optional.of(ws.attachToBuffer(path.getRealPath()));
+					return Optional.of(ws.attachBuffer(path.getRealPath()));
 				} catch(ConnectionException e) {
 					return Optional.empty();
 				}

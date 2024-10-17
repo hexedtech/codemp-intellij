@@ -12,7 +12,7 @@ import java.util.Objects;
 public class WorkspaceLeaveAction extends AnAction {
 	@Override
 	public void actionPerformed(@NotNull AnActionEvent e) {
-		String workspaceId = CodeMP.getActiveWorkspace().getWorkspaceId();
+		String workspaceId = CodeMP.getActiveWorkspace().id();
 		InteractionUtil.leaveWorkspace(Objects.requireNonNull(e.getProject()), workspaceId, null);
 	}
 

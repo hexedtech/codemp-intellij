@@ -25,6 +25,8 @@ import mp.code.intellij.listeners.CursorEventListener;
 import mp.code.intellij.settings.CodeMPSettings;
 import mp.code.intellij.ui.CodeMPToolPanel;
 import mp.code.intellij.util.cb.CursorCallback;
+import mp.code.intellij.util.cb.WorkspaceCallback;
+import org.apache.commons.lang3.ArrayUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -121,17 +123,17 @@ public class InteractionUtil {
 		});
 	}
 
-	public static void joinWorkspace(@NotNull Project project, @NotNull String workspaceId, @Nullable Runnable after) {
+	public static void attachWorkspace(@NotNull Project project, @NotNull String workspaceId, @Nullable Runnable after) {
 		ProgressManager.getInstance().run(new Task.Backgroundable(project, String.format("Joining workspace %s...", workspaceId)) {
 			@Override
 			public void run(@NotNull ProgressIndicator indicator) {
 				try {
-					CodeMP.joinWorkspace(workspaceId);
+					CodeMP.attachWorkspace(workspaceId);
 					MemoryManager.startWorkspaceLifetime(workspaceId);
 					refreshToolWindow(project);
 				} catch(ConnectionException e) {
 					InteractionUtil.notifyError(project, String.format(
-						"Failed to join workspace %s!",
+						"Failed to attach to workspace %s!",
 						workspaceId
 					), e);
 					return;
@@ -145,8 +147,12 @@ public class InteractionUtil {
 				eventMulticaster.addDocumentListener(new BufferEventListener(), lifetime);
 				eventMulticaster.addCaretListener(new CursorEventListener(), lifetime);
 
-				CodeMP.getActiveWorkspace().getCursor().callback(controller -> {
+				CodeMP.getActiveWorkspace().cursor().callback(controller -> {
 					new CursorCallback(this.myProject).accept(controller);
+				});
+
+				CodeMP.getActiveWorkspace().callback(receiver -> {
+					new WorkspaceCallback(this.myProject).accept(receiver);
 				});
 
 				if(after != null) after.run();
@@ -169,7 +175,7 @@ public class InteractionUtil {
 					client.deleteWorkspace(workspaceId);
 
 					Optional<Workspace> ws = client.getWorkspace("workspace leave");
-					if(ws.isPresent() && ws.get().getWorkspaceId().equals(workspaceId)) {
+					if(ws.isPresent() && ws.get().id().equals(workspaceId)) {
 						CodeMP.leaveWorkspace();
 						MemoryManager.endWorkspaceLifetime(workspaceId);
 					}
@@ -181,11 +187,11 @@ public class InteractionUtil {
 					notifyInfo(
 						project,
 						"Success",
-						String.format("Joined workspace %s!", workspaceId)
+						String.format("Deleted workspace %s!", workspaceId)
 					);
 				} catch(ConnectionException e) {
 					InteractionUtil.notifyError(project, String.format(
-						"Failed to join workspace %s!",
+						"Failed to delete workspace %s!",
 						workspaceId
 					), e);
 				}
@@ -210,10 +216,19 @@ public class InteractionUtil {
 		});
 	}
 
-	public static String[] listWorkspaces(Project project, boolean owned, boolean invited) {
+	public static String[] listWorkspaces(Project project, boolean owned, boolean joined) {
 		try {
 			Client client = CodeMP.getClient("drawActiveWorkspaces");
-			return client.listWorkspaces(owned, invited);
+
+			String[] ownedWorkspaces;
+			if(owned) ownedWorkspaces = client.fetchOwnedWorkspaces();
+			else ownedWorkspaces = new String[0];
+
+			String[] joinedWorkspaces;
+			if(joined) joinedWorkspaces = client.fetchJoinedWorkspaces();
+			else joinedWorkspaces = new String[0];
+
+			return ArrayUtils.addAll(ownedWorkspaces, joinedWorkspaces);
 		} catch(ConnectionRemoteException exception) {
 			notifyError(project, "Failed to list workspaces!", exception);
 			return new String[0];
@@ -222,12 +237,12 @@ public class InteractionUtil {
 
 	public static Optional<BufferController> bufferAttach(Project project, Workspace workspace, String path) {
 		try {
-			BufferController controller = workspace.attachToBuffer(path);
-			MemoryManager.startBufferLifetime(workspace.getWorkspaceId(), path);
+			BufferController controller = workspace.attachBuffer(path);
+			MemoryManager.startBufferLifetime(workspace.id(), path);
 			notifyInfo(project, "Success!", String.format(
 				"Successfully attached to buffer %s on workspace %s!",
 				path,
-				workspace.getWorkspaceId())
+				workspace.id())
 			);
 			return Optional.of(controller);
 		} catch(ConnectionException e) {

@@ -25,10 +25,8 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.MouseEvent;
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.OptionalLong;
 
 public class CodeMPToolPanel extends JPanel {
 	public CodeMPToolPanel(Project project) {
@@ -62,7 +60,7 @@ public class CodeMPToolPanel extends JPanel {
 						TreePath path = tree.getPathForLocation(e.getX(), e.getY());
 						if(path == null) return;
 						String workspaceName = path.getLastPathComponent().toString();
-						InteractionUtil.joinWorkspace(
+						InteractionUtil.attachWorkspace(
 							project,
 							workspaceName,
 							() -> CodeMPToolPanel.this.redraw(project)
@@ -111,8 +109,7 @@ public class CodeMPToolPanel extends JPanel {
 							controller.get().send(new TextChange(
 								0,
 								0,
-								ed.getDocument().getText(),
-								OptionalLong.empty()
+								ed.getDocument().getText()
 							));
 							ApplicationManager.getApplication().runWriteAction(() -> {
 								try {
@@ -129,7 +126,7 @@ public class CodeMPToolPanel extends JPanel {
 				}), BorderLayout.NORTH);
 
 				Workspace ws = CodeMP.getActiveWorkspace();
-				JTree tree = drawTree(ws.getWorkspaceId(), ws.getFileTree(Optional.empty(), false));
+				JTree tree = drawTree(ws.id(), ws.searchBuffers(Optional.empty()));
 				tree.addMouseListener(new SimpleMouseListener() {
 					@Override
 					public void mouseClicked(MouseEvent e) {
@@ -158,7 +155,7 @@ public class CodeMPToolPanel extends JPanel {
 
 				this.add(tree, BorderLayout.CENTER);
 
-				JList<String> userlist = new JBList<>(ws.userList());
+				JList<String> userlist = new JBList<>(CodeMP.HIGHLIGHTER_MAP.keySet()); // TODO shouldn't use this
 				this.add(userlist, BorderLayout.SOUTH);
 			}
 		}

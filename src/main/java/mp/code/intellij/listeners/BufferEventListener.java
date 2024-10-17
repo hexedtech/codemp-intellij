@@ -14,7 +14,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 import java.util.Optional;
-import java.util.OptionalLong;
 
 public class BufferEventListener implements DocumentListener {
 
@@ -51,8 +50,7 @@ public class BufferEventListener implements DocumentListener {
 					controller.send(new TextChange(
 						changeOffset,
 						changeOffset + event.getOldFragment().length(),
-						newFragment.toString(),
-						OptionalLong.empty()
+						newFragment.toString()
 					));
 				} catch(ControllerException e) {
 					throw new RuntimeException(e);

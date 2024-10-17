@@ -1,7 +1,7 @@
 <idea-plugin>
     <id>mp.code.intellij</id>
 	<name>CodeMP</name>
-    <vendor email="me@zaaarf.foo" url="https://code.mp">CodeMP</vendor>
+    <vendor email="support@codemp.dev" url="https://code.mp">CodeMP</vendor>
 
     <description>A plugin for MultiPlayer code editing across different IDEs.</description>
 
@@ -15,8 +15,8 @@
 			<group id="codemp.workspace" text="Workspace" popup="true">
 				<action id="codemp.workspace.create" class="mp.code.intellij.actions.workspace.WorkspaceCreateAction"
 						text="Create Workspace"/>
-				<action id="codemp.workspace.join" class="mp.code.intellij.actions.workspace.WorkspaceJoinAction"
-						text="Join Workspace"/>
+				<action id="codemp.workspace.join" class="mp.code.intellij.actions.workspace.WorkspaceAttachAction"
+						text="Attach To Workspace"/>
 				<action id="codemp.workspace.invite" class="mp.code.intellij.actions.workspace.WorkspaceInviteAction"
 						text="Invite To Workspace"/>
 				<action id="codemp.workspace.delete" class="mp.code.intellij.actions.workspace.WorkspaceDeleteAction"
@@ -40,11 +40,14 @@
 	</actions>
 
 	<extensions defaultExtensionNs="com.intellij">
+		<!--
 		<virtualFileSystem
 				id="codemp_vfs"
 				key="codemp"
 				physical="false"
 				implementationClass="mp.code.intellij.vfs.CodeMPFileSystem"/>
+		<workspaceModel.fileIndexContributor implementation="mp.code.intellij.vfs.CodeMPFileIndexContributor" />
+		-->
 		<notificationGroup id="CodeMP" displayType="BALLOON"/>
 		<applicationService serviceImplementation="mp.code.intellij.settings.CodeMPSettings"/>
 		<applicationConfigurable
@@ -52,11 +55,11 @@
 			instance="mp.code.intellij.settings.CodeMPSettingsConfigurable"
 			id="mp.code.intellij.settings.CodeMPSettingsConfigurable"
 			displayName="CodeMP"/>
-		<workspaceModel.fileIndexContributor implementation="mp.code.intellij.vfs.CodeMPFileIndexContributor" />
 		<toolWindow
 				id="CodeMP"
 				factoryClass="mp.code.intellij.ui.CodeMPWindowFactory"
 				anchor="right"
+				icon="/icons/codempToolWindow.svg"
 				doNotActivateOnStart="false" />
 	</extensions>
 </idea-plugin>

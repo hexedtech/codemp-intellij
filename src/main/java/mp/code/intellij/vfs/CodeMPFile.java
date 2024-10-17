@@ -51,11 +51,15 @@ public class CodeMPFile extends VirtualFile {
 
 	@Override
 	public boolean isValid() {
+		return false;
+		/* TODO
 		return CodeMP.getClient("validity check")
 			.getWorkspace(this.path.getWorkspaceName())
+			.map(ws -> ws.getBuffer(this.path.getRealPath()).isPresent())
 			.map(ws -> ws.getFileTree(Optional.of(this.path.getRealPath()), true))
 			.map(buf -> buf.length != 0)
 			.orElse(false);
+		 */
 	}
 
 	@Override

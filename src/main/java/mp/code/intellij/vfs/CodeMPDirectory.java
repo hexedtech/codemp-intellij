@@ -38,7 +38,7 @@ public class CodeMPDirectory extends CodeMPFile {
 		return CodeMP.getClient("get folder children")
 			.getWorkspace(this.path.getWorkspaceName())
 			.map(ws ->
-				Arrays.stream(ws.getFileTree(Optional.of(this.path.getRealPath()), false))
+				Arrays.stream(ws.searchBuffers(Optional.of(this.path.getRealPath())))
 					.map(p -> new CodeMPPath(this.path.getWorkspaceName(), p))
 					.map(CodeMPPath::join)
 					.map(this.fileSystem::findFileByPath)

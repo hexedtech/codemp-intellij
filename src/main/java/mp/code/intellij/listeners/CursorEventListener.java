@@ -3,6 +3,7 @@ package mp.code.intellij.listeners;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.vfs.VirtualFile;
+import mp.code.data.Selection;
 import mp.code.exceptions.ControllerException;
 import mp.code.intellij.CodeMP;
 import mp.code.intellij.util.FileUtil;
@@ -10,7 +11,6 @@ import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.event.CaretEvent;
 import com.intellij.openapi.editor.event.CaretListener;
-import mp.code.data.Cursor;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -21,7 +21,7 @@ public class CursorEventListener implements CaretListener {
 
 	@Override
 	public void caretPositionChanged(@NotNull CaretEvent event) {
-		// TODO instead of returning, should un-set remote ursor position (once)
+		// TODO instead of returning, should un-set remote cursor position (once)
 
 		Caret caret = event.getCaret();
 		if(caret == null) return;
@@ -68,13 +68,12 @@ public class CursorEventListener implements CaretListener {
 
 		new Thread(() -> ApplicationManager.getApplication().runReadAction(() -> {
 			try {
-				CodeMP.getActiveWorkspace().getCursor().send(new Cursor(
+				CodeMP.getActiveWorkspace().cursor().send(new Selection(
 					startPos.line,
 					startPos.column,
 					endPos.line,
 					endPos.column,
-					FileUtil.getRelativePath(editor.getProject(), editor.getVirtualFile()),
-					null
+					FileUtil.getRelativePath(editor.getProject(), editor.getVirtualFile())
 				));
 			} catch(ControllerException e) {
 				throw new RuntimeException(e);
@@ -87,8 +86,8 @@ public class CursorEventListener implements CaretListener {
 		new Thread(() -> ApplicationManager.getApplication().runReadAction(() -> {
 			try {
 				CodeMP.getActiveWorkspace()
-					.getCursor()
-					.send(new Cursor(0, 0, 0, 0, "", null));
+					.cursor()
+					.send(new Selection(0, 0, 0, 0, ""));
 			} catch(ControllerException e) {
 				throw new RuntimeException(e);
 			}

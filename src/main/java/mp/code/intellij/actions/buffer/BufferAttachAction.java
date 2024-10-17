@@ -12,7 +12,6 @@ import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import mp.code.BufferController;
-import mp.code.data.TextChange;
 import mp.code.exceptions.ControllerException;
 import mp.code.intellij.CodeMP;
 import mp.code.intellij.util.FileUtil;
@@ -20,16 +19,14 @@ import mp.code.intellij.util.InteractionUtil;
 import mp.code.intellij.util.cb.BufferCallback;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.IOException;
 import java.util.Optional;
-import java.util.OptionalLong;
 
 public class BufferAttachAction extends AnAction {
 	@Override
 	public void actionPerformed(@NotNull AnActionEvent e) {
 		Project proj = e.getProject();
 
-		String[] filetree = CodeMP.getActiveWorkspace().getFileTree(Optional.empty(), false);
+		String[] filetree = CodeMP.getActiveWorkspace().searchBuffers(Optional.empty());
 		int choice = Messages.showChooseDialog(
 			"Attach to which buffer?",
 			"CodeMP Buffer Attach",
@@ -38,7 +35,6 @@ public class BufferAttachAction extends AnAction {
 			Messages.getQuestionIcon()
 		);
 
-		// TODO check out of bounds but should be guaranteed by intellij
 		String path = filetree[choice];
 
 		Editor editor = FileUtil.getActiveEditorByPath(proj, path);

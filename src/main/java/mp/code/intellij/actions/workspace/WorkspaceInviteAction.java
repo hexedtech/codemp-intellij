@@ -8,9 +8,6 @@ import mp.code.intellij.CodeMP;
 import mp.code.intellij.util.InteractionUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
-import java.util.List;
-
 public class WorkspaceInviteAction extends AnAction {
 	@Override
 	public void actionPerformed(@NotNull AnActionEvent e) {
@@ -23,12 +20,11 @@ public class WorkspaceInviteAction extends AnAction {
 			return;
 		}
 
-		int choice = Messages.showDialog( // TODO NOT THE ONE
-			e.getProject(),
+		int choice = Messages.showChooseDialog(
 			"Please choose a workspace to invite to:",
 			"CodeMP Invite To Workspace",
 			availableWorkspaces,
-			0,
+			"",
 			Messages.getQuestionIcon()
 		);
 

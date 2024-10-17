@@ -52,8 +52,8 @@ public class CodeMP {
 			.orElseThrow(IllegalStateException::new);
 	}
 
-	public static void joinWorkspace(String workspaceId) throws ConnectionException {
-		CodeMP.getClient("join workspace").joinWorkspace(workspaceId);
+	public static void attachWorkspace(String workspaceId) throws ConnectionException {
+		CodeMP.getClient("attach workspace").attachWorkspace(workspaceId);
 		ACTIVE_WORKSPACE_ID = workspaceId;
 	}
 

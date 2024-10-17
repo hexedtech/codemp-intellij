@@ -21,12 +21,11 @@ public class WorkspaceDeleteAction extends AnAction {
 			return;
 		}
 
-		int choice = Messages.showDialog( // TODO NOT THE ONE
-			e.getProject(),
+		int choice = Messages.showChooseDialog(
 			"Please choose a workspace to delete:",
 			"CodeMP Delete Workspace",
 			availableWorkspaces,
-			0,
+			"",
 			Messages.getQuestionIcon()
 		);
 

@@ -68,10 +68,14 @@ public class CodeMPFileSystem extends VirtualFileSystem { // implements NonPhysi
 	}
 
 	private CodeMPFile fileOrFolderByPath(CodeMPPath cmpPath) {
+		return null;
+		/* TODO
 		return CodeMP.getClient("file seek")
 			.getWorkspace(cmpPath.getWorkspaceName())
 			.filter(ws -> ws.getFileTree(Optional.ofNullable(cmpPath.getRealPath()), true).length != 0).map(ws -> new CodeMPFile(this, cmpPath))
 			.orElseGet(() -> new CodeMPDirectory(this, cmpPath));
+
+		 */
 	}
 
 
@@ -132,7 +136,7 @@ public class CodeMPFileSystem extends VirtualFileSystem { // implements NonPhysi
 				if(ws.isPresent()) {
 					CodeMPPath newFilePath = parent.path.resolve(fileName);
 					ws.get().createBuffer(newFilePath.getRealPath());
-					ws.get().attachToBuffer(newFilePath.getRealPath());
+					ws.get().attachBuffer(newFilePath.getRealPath());
 					return new CodeMPFile(this, newFilePath);
 				} else {
 					throw new IOException("failed to find workspace!"); // TODO do it better
@@ -170,7 +174,7 @@ public class CodeMPFileSystem extends VirtualFileSystem { // implements NonPhysi
 					.orElseThrow(() -> new IOException("Non existing buffer for old file!"));
 				BufferController destinationController = FileUtil.getRelevantBufferController(cfile.path)
 					.orElseThrow(() -> new IOException("Non existing buffer for new file!"));
-				destinationController.send(new TextChange(0, 0, oldController.getContent(), OptionalLong.empty()));
+				destinationController.send(new TextChange(0, 0, oldController.getContent()));
 				return newFile;
 			} catch(ControllerException ex) {
 				throw new IOException(ex);

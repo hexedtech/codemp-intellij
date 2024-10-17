@@ -39,24 +39,24 @@ public class CursorCallback implements Consumer<CursorController> {
 					CodeMP.LOGGER.debug(String.format(
 						"Cursor moved by user %s! Start pos: %dx %dy; end pos: %dx %dy in buffer %s!",
 						event.user,
-						event.startCol,
-						event.startRow,
-						event.endCol,
-						event.endRow,
-						event.buffer
+						event.selection.startCol,
+						event.selection.startRow,
+						event.selection.endCol,
+						event.selection.endRow,
+						event.selection.buffer
 					));
 
 					try {
 						ApplicationManager.getApplication().runReadAction(() -> {
-							Editor editor = FileUtil.getActiveEditorByPath(this.project, event.buffer);
+							Editor editor = FileUtil.getActiveEditorByPath(this.project, event.selection.buffer);
 							if(editor == null) {
 								RangeHighlighter previous = CodeMP.HIGHLIGHTER_MAP.remove(event.user);
 								if(previous != null) previous.dispose();
 								return;
 							}
 
-							int startOffset = editor.getDocument().getLineStartOffset(event.startRow) + event.startCol;
-							int endOffset = editor.getDocument().getLineStartOffset(event.endRow) + event.endCol;
+							int startOffset = editor.getDocument().getLineStartOffset(event.selection.startRow) + event.selection.startCol;
+							int endOffset = editor.getDocument().getLineStartOffset(event.selection.endRow) + event.selection.endCol;
 
 							int documentLength = editor.getDocument().getTextLength();
 							if(startOffset > documentLength || endOffset > documentLength) {

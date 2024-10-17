@@ -7,7 +7,7 @@ import com.intellij.openapi.project.Project;
 import lombok.RequiredArgsConstructor;
 import mp.code.BufferController;
 import mp.code.Extensions;
-import mp.code.data.TextChange;
+import mp.code.data.BufferUpdate;
 import mp.code.exceptions.ControllerException;
 import mp.code.intellij.CodeMP;
 import mp.code.intellij.util.FileUtil;
@@ -30,35 +30,40 @@ public class BufferCallback implements Consumer<BufferController> {
 			ApplicationManager.getApplication().runReadAction(() -> {
 				Editor editor = FileUtil.getActiveEditorByPath(this.project, bufferController.getName());
 				ApplicationManager.getApplication().invokeLaterOnWriteThread(() -> {
-					List<TextChange> changeList = new ArrayList<>();
+					List<BufferUpdate> updateList = new ArrayList<>();
 					while(true) {
-						Optional<TextChange> changeOptional;
+						Optional<BufferUpdate> updateOptional;
 						try {
-							changeOptional = bufferController.tryRecv();
+							updateOptional = bufferController.tryRecv();
 						} catch(ControllerException ex) {
 							throw new RuntimeException(ex);
 						}
 
-						if(changeOptional.isEmpty())
+						if(updateOptional.isEmpty())
 							break;
-						TextChange change = changeOptional.get();
+						BufferUpdate update = updateOptional.get();
 						CodeMP.LOGGER.debug(String.format(
 							"Received text change %s from offset %d to %d!",
-							change.content,
-							change.start,
-							change.end
+							update.change.content,
+							update.change.startIdx,
+							update.change.endIdx
 						));
-						changeList.add(change);
+						updateList.add(update);
 					}
 
 					ApplicationManager.getApplication().runWriteAction(() -> {
 						CommandProcessor.getInstance().executeCommand(
 							this.project,
-							() -> changeList.forEach((change) -> {
-								editor.getDocument().replaceString((int) change.start, (int) change.end, change.content);
+							() -> updateList.forEach((update) -> {
+								editor.getDocument().replaceString(
+									(int) update.change.startIdx,
+									(int) update.change.endIdx,
+									update.change.content
+								);
+								bufferController.ack(update.version);
 								// check for validity, force-sync if mismatch
 								// TODO: prompt instead of doing it silently
-								if(change.hash.isPresent() && change.hash.getAsLong() != Extensions.hash(editor.getDocument().getText())) {
+								if(update.hash.isPresent() && update.hash.getAsLong() != Extensions.hash(editor.getDocument().getText())) {
 									try {
 										editor.getDocument().setText(bufferController.getContent());
 									} catch(ControllerException ignored) {} // ignore exception

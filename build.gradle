@@ -21,7 +21,7 @@ repositories {
 
 dependencies {
 	implementation variantOf(libs.codemp) {
-		classifier osdetector.classifier
+		classifier 'all'
 	}
 
 	compileOnly libs.lombok
