@@ -1,6 +1,7 @@
 <idea-plugin>
-    <id>mp.code.intellij</id>
+    <id>mp.code.ij</id>
 	<name>CodeMP</name>
+	<version>0.0.1</version>
     <vendor email="support@codemp.dev" url="https://code.mp">CodeMP</vendor>
 
     <description>A plugin for MultiPlayer code editing across different IDEs.</description>
@@ -10,30 +11,30 @@
     <actions>
         <group id="codemp" text="CodeMP" popup="true">
             <add-to-group group-id="ToolsMenu" anchor="first"/>
-			<action id="codemp.connect" class="mp.code.intellij.actions.ConnectAction" text="Connect..."/>
-			<action id="codemp.disconnect" class="mp.code.intellij.actions.DisconnectAction" text="Disconnect..."/>
+			<action id="codemp.connect" class="mp.code.ij.actions.ConnectAction" text="Connect..."/>
+			<action id="codemp.disconnect" class="mp.code.ij.actions.DisconnectAction" text="Disconnect..."/>
 			<group id="codemp.workspace" text="Workspace" popup="true">
-				<action id="codemp.workspace.create" class="mp.code.intellij.actions.workspace.WorkspaceCreateAction"
+				<action id="codemp.workspace.create" class="mp.code.ij.actions.workspace.WorkspaceCreateAction"
 						text="Create Workspace"/>
-				<action id="codemp.workspace.join" class="mp.code.intellij.actions.workspace.WorkspaceAttachAction"
+				<action id="codemp.workspace.join" class="mp.code.ij.actions.workspace.WorkspaceAttachAction"
 						text="Attach To Workspace"/>
-				<action id="codemp.workspace.invite" class="mp.code.intellij.actions.workspace.WorkspaceInviteAction"
+				<action id="codemp.workspace.invite" class="mp.code.ij.actions.workspace.WorkspaceInviteAction"
 						text="Invite To Workspace"/>
-				<action id="codemp.workspace.delete" class="mp.code.intellij.actions.workspace.WorkspaceDeleteAction"
+				<action id="codemp.workspace.delete" class="mp.code.ij.actions.workspace.WorkspaceDeleteAction"
 						text="Delete Workspace"/>
-				<action id="codemp.workspace.leave" class="mp.code.intellij.actions.workspace.WorkspaceLeaveAction"
+				<action id="codemp.workspace.leave" class="mp.code.ij.actions.workspace.WorkspaceLeaveAction"
 						text="Leave Workspace"/>
 			</group>
 			<group id="codemp.buffer" text="Buffer" popup="true">
-				<action id="codemp.buffer.attach" class="mp.code.intellij.actions.buffer.BufferAttachAction"
+				<action id="codemp.buffer.attach" class="mp.code.ij.actions.buffer.BufferAttachAction"
 						text="Attach to Remote Buffer"/>
-				<action id="codemp.buffer.detach" class="mp.code.intellij.actions.buffer.BufferDetachAction"
+				<action id="codemp.buffer.detach" class="mp.code.ij.actions.buffer.BufferDetachAction"
 						text="Detach from Remote Buffer"/>
-				<action id="codemp.buffer.create" class="mp.code.intellij.actions.buffer.BufferCreateAction"
+				<action id="codemp.buffer.create" class="mp.code.ij.actions.buffer.BufferCreateAction"
 						text="Create a New Empty Remote Buffer"/>
-				<action id="codemp.buffer.delete" class="mp.code.intellij.actions.buffer.BufferDeleteAction"
+				<action id="codemp.buffer.delete" class="mp.code.ij.actions.buffer.BufferDeleteAction"
 						text="Delete a Remote Buffer"/>
-				<action id="codemp.buffer.sync" class="mp.code.intellij.actions.buffer.BufferSyncAction"
+				<action id="codemp.buffer.sync" class="mp.code.ij.actions.buffer.BufferSyncAction"
 						text="Sync Content of a Managed Buffer"/>
 			</group>
         </group>
@@ -45,19 +46,19 @@
 				id="codemp_vfs"
 				key="codemp"
 				physical="false"
-				implementationClass="mp.code.intellij.vfs.CodeMPFileSystem"/>
-		<workspaceModel.fileIndexContributor implementation="mp.code.intellij.vfs.CodeMPFileIndexContributor" />
+				implementationClass="mp.code.ij.vfs.CodeMPFileSystem"/>
+		<workspaceModel.fileIndexContributor implementation="mp.code.ij.vfs.CodeMPFileIndexContributor" />
 		-->
 		<notificationGroup id="CodeMP" displayType="BALLOON"/>
-		<applicationService serviceImplementation="mp.code.intellij.settings.CodeMPSettings"/>
+		<applicationService serviceImplementation="mp.code.ij.settings.CodeMPSettings"/>
 		<applicationConfigurable
 			parentId="tools"
-			instance="mp.code.intellij.settings.CodeMPSettingsConfigurable"
-			id="mp.code.intellij.settings.CodeMPSettingsConfigurable"
+			instance="mp.code.ij.settings.CodeMPSettingsConfigurable"
+			id="mp.code.ij.settings.CodeMPSettingsConfigurable"
 			displayName="CodeMP"/>
 		<toolWindow
 				id="CodeMP"
-				factoryClass="mp.code.intellij.ui.CodeMPWindowFactory"
+				factoryClass="mp.code.ij.ui.CodeMPWindowFactory"
 				anchor="right"
 				icon="/icons/codempToolWindow.svg"
 				doNotActivateOnStart="false" />
