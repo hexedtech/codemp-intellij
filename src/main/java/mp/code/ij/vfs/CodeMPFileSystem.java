@@ -6,7 +6,7 @@ import com.intellij.openapi.vfs.*;
 import lombok.Getter;
 import mp.code.BufferController;
 import mp.code.Workspace;
-import mp.code.data.TextChange;
+import mp.code.proto.TextChange;
 import mp.code.exceptions.ConnectionException;
 import mp.code.exceptions.ConnectionRemoteException;
 import mp.code.exceptions.ControllerException;
@@ -14,6 +14,7 @@ import mp.code.ij.CodeMP;
 import mp.code.ij.exceptions.ide.NotConnectedException;
 import mp.code.ij.settings.CodeMPSettings;
 import mp.code.ij.util.FileUtil;
+import mp.code.proto.WorkspaceIdentifier;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -21,7 +22,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiConsumer;
 
@@ -104,10 +104,10 @@ public class CodeMPFileSystem extends VirtualFileSystem { // implements NonPhysi
 	protected void deleteFile(Object requester, @NotNull VirtualFile vFile) throws IOException {
 		if(vFile instanceof CodeMPFile cmpFile) {
 			try {
-				Optional<Workspace> ws = CodeMP.getClient("delete file")
-					.getWorkspace(cmpFile.path.getWorkspaceName());
-				if(ws.isPresent()) {
-					ws.get().deleteBuffer(vFile.getPath());
+				WorkspaceIdentifier id = cmpFile.path.getWorkspaceId();
+				Workspace ws = CodeMP.getClient("delete file").getWorkspace(id.user, id.workspace);
+				if(ws != null) {
+					ws.deleteBuffer(vFile.getPath());
 				} else {
 					throw new IOException("failed to find workspace!"); // TODO do it better
 				}
@@ -131,11 +131,12 @@ public class CodeMPFileSystem extends VirtualFileSystem { // implements NonPhysi
 	protected @NotNull CodeMPFile createChildFile(Object requester, @NotNull VirtualFile vDir, @NotNull String fileName) throws IOException {
 		if(vDir instanceof CodeMPDirectory parent) {
 			try {
-				Optional<Workspace> ws = CodeMP.getClient("delete file").getWorkspace(parent.path.getWorkspaceName());
-				if(ws.isPresent()) {
+				WorkspaceIdentifier id = parent.path.getWorkspaceId();
+				Workspace ws = CodeMP.getClient("delete file").getWorkspace(id.user, id.workspace);
+				if(ws != null) {
 					CodeMPPath newFilePath = parent.path.resolve(fileName);
-					ws.get().createBuffer(newFilePath.getRealPath());
-					ws.get().attachBuffer(newFilePath.getRealPath());
+					ws.createBuffer(newFilePath.getRealPath(), false);
+					ws.attachBuffer(newFilePath.getRealPath());
 					return new CodeMPFile(this, newFilePath);
 				} else {
 					throw new IOException("failed to find workspace!"); // TODO do it better
@@ -173,7 +174,7 @@ public class CodeMPFileSystem extends VirtualFileSystem { // implements NonPhysi
 					.orElseThrow(() -> new IOException("Non existing buffer for old file!"));
 				BufferController destinationController = FileUtil.getRelevantBufferController(cfile.path)
 					.orElseThrow(() -> new IOException("Non existing buffer for new file!"));
-				destinationController.send(new TextChange(0, 0, oldController.getContent()));
+				destinationController.send(new TextChange(0, 0, oldController.content()));
 				return newFile;
 			} catch(ControllerException ex) {
 				throw new IOException(ex);

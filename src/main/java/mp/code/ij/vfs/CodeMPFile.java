@@ -80,7 +80,7 @@ public class CodeMPFile extends VirtualFile {
 	public byte @NotNull [] contentsToByteArray() throws IOException {
 		return FileUtil.getRelevantBufferController(this.path).flatMap(c -> {
 			try {
-				return Optional.of(c.getContent().getBytes());
+				return Optional.of(c.content().getBytes());
 			} catch(ControllerException e) {
 				return Optional.empty();
 			}

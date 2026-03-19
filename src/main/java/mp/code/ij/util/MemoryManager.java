@@ -2,6 +2,7 @@ package mp.code.ij.util;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
+import mp.code.proto.WorkspaceIdentifier;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.Cleaner;
@@ -34,37 +35,37 @@ public class MemoryManager {
 		return true;
 	}
 
-	public static boolean startWorkspaceLifetime(String workspace) {
+	public static boolean startWorkspaceLifetime(WorkspaceIdentifier workspace) {
 		if(clientDisposable.workspaces.containsKey(workspace)) return false;
 		clientDisposable.workspaces.put(workspace, new WorkspaceDisposable());
 		return true;
 	}
 
-	public static @Nullable Disposable getWorkspaceLifetime(String workspace) {
+	public static @Nullable Disposable getWorkspaceLifetime(WorkspaceIdentifier workspace) {
 		return clientDisposable.workspaces.get(workspace);
 	}
 
-	public static boolean endWorkspaceLifetime(String workspace) {
+	public static boolean endWorkspaceLifetime(WorkspaceIdentifier workspace) {
 		WorkspaceDisposable ws = clientDisposable.workspaces.remove(workspace);
 		if(ws == null) return false;
 		Disposer.dispose(ws);
 		return true;
 	}
 
-	public static boolean startBufferLifetime(String workspace, String buffer) {
+	public static boolean startBufferLifetime(WorkspaceIdentifier workspace, String buffer) {
 		WorkspaceDisposable ws = (WorkspaceDisposable) getWorkspaceLifetime(workspace);
 		if(ws == null || ws.buffers.containsKey(buffer)) return false;
 		ws.buffers.put(buffer, Disposer.newDisposable());
 		return true;
 	}
 
-	public static @Nullable Disposable getBufferLifetime(String workspace, String buffer) {
+	public static @Nullable Disposable getBufferLifetime(WorkspaceIdentifier workspace, String buffer) {
 		WorkspaceDisposable ws = (WorkspaceDisposable) getWorkspaceLifetime(workspace);
 		if(ws == null) return null;
 		return ws.buffers.get(buffer);
 	}
 
-	public static boolean endBufferLifetime(String workspace, String buffer) {
+	public static boolean endBufferLifetime(WorkspaceIdentifier workspace, String buffer) {
 		WorkspaceDisposable ws = (WorkspaceDisposable) getWorkspaceLifetime(workspace);
 		if(ws == null) return false;
 		Disposable buf = ws.buffers.get(buffer);
@@ -74,7 +75,7 @@ public class MemoryManager {
 	}
 
 	private static class ClientDisposable implements Disposable {
-		private final Map<String, WorkspaceDisposable> workspaces = new ConcurrentHashMap<>();
+		private final Map<WorkspaceIdentifier, WorkspaceDisposable> workspaces = new ConcurrentHashMap<>();
 		@Override
 		public void dispose() {
 			this.workspaces.values().forEach(Disposer::dispose);

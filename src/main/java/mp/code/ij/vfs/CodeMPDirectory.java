@@ -1,7 +1,10 @@
 package mp.code.ij.vfs;
 
 import lombok.Getter;
+import mp.code.Client;
+import mp.code.Workspace;
 import mp.code.ij.CodeMP;
+import mp.code.proto.WorkspaceIdentifier;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -9,7 +12,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Arrays;
-import java.util.Optional;
 
 @Getter
 public class CodeMPDirectory extends CodeMPFile {
@@ -35,15 +37,18 @@ public class CodeMPDirectory extends CodeMPFile {
 
 	@Override
 	public CodeMPFile[] getChildren() {
-		return CodeMP.getClient("get folder children")
-			.getWorkspace(this.path.getWorkspaceName())
-			.map(ws ->
-				Arrays.stream(ws.searchBuffers(Optional.of(this.path.getRealPath())))
-					.map(p -> new CodeMPPath(this.path.getWorkspaceName(), p))
-					.map(CodeMPPath::join)
-					.map(this.fileSystem::findFileByPath)
-					.toArray(CodeMPFile[]::new)
-			).orElseGet(() -> new CodeMPFile[0]);
+		WorkspaceIdentifier id = this.path.getWorkspaceId();
+		Client client = CodeMP.getClient("get folder children");
+		Workspace ws = client.getWorkspace(id.user, id.workspace);
+		if(ws == null) {
+			return new CodeMPFile[0];
+		}
+
+		return Arrays.stream(ws.searchBuffers(this.path.getRealPath()))
+			.map(p -> new CodeMPPath(this.path.getWorkspaceId(), p))
+			.map(CodeMPPath::join)
+			.map(this.fileSystem::findFileByPath)
+			.toArray(CodeMPFile[]::new);
 	}
 
 	@Override

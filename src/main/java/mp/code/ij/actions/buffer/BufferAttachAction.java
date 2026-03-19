@@ -12,6 +12,7 @@ import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import mp.code.BufferController;
+import mp.code.Workspace;
 import mp.code.exceptions.ControllerException;
 import mp.code.ij.CodeMP;
 import mp.code.ij.util.FileUtil;
@@ -19,15 +20,22 @@ import mp.code.ij.util.InteractionUtil;
 import mp.code.ij.util.cb.BufferCallback;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Optional;
-
 public class BufferAttachAction extends AnAction {
 	@Override
 	public void actionPerformed(@NotNull AnActionEvent e) {
 		Project proj = e.getProject();
 
-		String[] filetree = CodeMP.getActiveWorkspace().searchBuffers(Optional.empty());
-		int choice = Messages.showChooseDialog(
+		Workspace ws = CodeMP.getActiveWorkspace();
+		if(ws == null) {
+			Messages.showErrorDialog(
+				"Not currently in a workspace!",
+				"CodeMP Buffer Attach"
+			);
+			return;
+		}
+
+		String[] filetree = ws.searchBuffers(null);
+		int choice = Messages.showChooseDialog( // TODO: good to know it looks awful, now can i know where to go?
 			"Attach to which buffer?",
 			"CodeMP Buffer Attach",
 			filetree,
@@ -39,7 +47,7 @@ public class BufferAttachAction extends AnAction {
 
 		Editor editor = FileUtil.getActiveEditorByPath(proj, path);
 
-		if (editor == null) {
+		if(editor == null) {
 			FileEditor currentEditor = FileEditorManager.getInstance(proj).getSelectedEditor();
 			if(currentEditor == null) {
 				Messages.showErrorDialog(
@@ -48,7 +56,7 @@ public class BufferAttachAction extends AnAction {
 				);
 				return;
 			}
-			if (!(currentEditor instanceof TextEditor)) {
+			if(!(currentEditor instanceof TextEditor)) {
 				Messages.showErrorDialog(
 					"No text file is currently open!",
 					"CodeMP Buffer Attach"
@@ -58,8 +66,8 @@ public class BufferAttachAction extends AnAction {
 			editor = ((TextEditor) currentEditor).getEditor();
 		}
 
-		Optional<BufferController> controller = InteractionUtil.bufferAttach(proj, CodeMP.getActiveWorkspace(), path);
-		if(controller.isEmpty()) {
+		BufferController controller = InteractionUtil.bufferAttach(proj, CodeMP.getActiveWorkspace(), path);
+		if(controller == null) {
 			Messages.showErrorDialog(
 				"An unknown error has occurred!",
 				"CodeMP Buffer Attach"
@@ -69,7 +77,7 @@ public class BufferAttachAction extends AnAction {
 
 		String remoteContent;
 		try {
-			remoteContent = controller.get().getContent();
+			remoteContent = controller.content();
 		} catch (ControllerException ex) {
 			throw new RuntimeException(ex);
 		}
@@ -86,12 +94,12 @@ public class BufferAttachAction extends AnAction {
 			);
 			try {
 
-				FileUtil.getAndRegisterBufferEquivalent(this, proj, controller.get());
+				FileUtil.getAndRegisterBufferEquivalent(this, proj, controller);
 			} catch(Exception ex) {
 				throw new RuntimeException(ex);
 			}
 		});
-		controller.get().callback(buf -> new BufferCallback(proj).accept(buf));
+		controller.callback(buf -> new BufferCallback(proj).accept(buf));
 	}
 
 	@Override

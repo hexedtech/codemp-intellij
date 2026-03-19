@@ -9,15 +9,17 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import lombok.RequiredArgsConstructor;
 import mp.code.CursorController;
-import mp.code.data.Cursor;
 import mp.code.exceptions.ControllerException;
 import mp.code.ij.CodeMP;
 import mp.code.ij.util.ColorUtil;
 import mp.code.ij.util.FileUtil;
 import mp.code.ij.util.InteractionUtil;
+import mp.code.proto.CursorEvent;
+import mp.code.proto.CursorPosition;
 
-import java.awt.*;
-import java.util.Optional;
+import java.awt.Font;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.function.Consumer;
@@ -32,46 +34,42 @@ public class CursorCallback implements Consumer<CursorController> {
 		CURSOR_EXECUTOR.execute(() -> { // necessary
 			try {
 				while(true) {
-					Optional<Cursor> c = controller.tryRecv();
-					if(c.isEmpty()) break;
-					Cursor event = c.get();
+					CursorEvent event = controller.tryRecv();
+					if(event == null) {
+						break;
+					}
 
 					CodeMP.LOGGER.debug(String.format(
-						"Cursor moved by user %s! Start pos: %dx %dy; end pos: %dx %dy in buffer %s!",
-						event.user,
-						event.selection.startCol,
-						event.selection.startRow,
-						event.selection.endCol,
-						event.selection.endRow,
-						event.selection.buffer
+						"Cursor event received in the background: %s",
+						event
 					));
 
 					try {
 						ApplicationManager.getApplication().runReadAction(() -> {
-							Editor editor = FileUtil.getActiveEditorByPath(this.project, event.selection.buffer);
+							Editor editor = FileUtil.getActiveEditorByPath(this.project, event.position.buffer);
+							disposeOfPreviousHighlighters(event.user);
 							if(editor == null) {
-								RangeHighlighter previous = CodeMP.HIGHLIGHTER_MAP.remove(event.user);
-								if(previous != null) previous.dispose();
 								return;
 							}
 
-							int startOffset = editor.getDocument().getLineStartOffset(event.selection.startRow) + event.selection.startCol;
-							int endOffset = editor.getDocument().getLineStartOffset(event.selection.endRow) + event.selection.endCol;
+							List<RangeHighlighter> cursor = new ArrayList<>();
+							for(CursorPosition pos : event.position.cursors) {
+								int startOffset = editor.getDocument().getLineStartOffset(pos.start.row) + pos.start.col;
+								int endOffset = editor.getDocument().getLineStartOffset(pos.end.row) + pos.end.col;
 
-							int documentLength = editor.getDocument().getTextLength();
-							if(startOffset > documentLength || endOffset > documentLength) {
-								CodeMP.LOGGER.debug(String.format(
-									"Out of bounds cursor: start was %d, end was %d, document length was %d!",
-									startOffset,
-									endOffset,
-									documentLength
-								));
-								return;
-							}
+								int documentLength = editor.getDocument().getTextLength();
+								if(startOffset > documentLength || endOffset > documentLength) {
+									CodeMP.LOGGER.debug(String.format(
+										"Out of bounds cursor: start was %d, end was %d, document length was %d!",
+										startOffset,
+										endOffset,
+										documentLength
+									));
+									return;
+								}
 
-							RangeHighlighter previous = CodeMP.HIGHLIGHTER_MAP.put(
-								event.user,
-								editor.getMarkupModel().addRangeHighlighter(
+
+								cursor.add(editor.getMarkupModel().addRangeHighlighter(
 									startOffset,
 									endOffset,
 									HighlighterLayer.SELECTION,
@@ -83,10 +81,10 @@ public class CursorCallback implements Consumer<CursorController> {
 										Font.PLAIN
 									),
 									HighlighterTargetArea.EXACT_RANGE
-								)
-							);
+								));
+							}
 
-							if(previous != null) previous.dispose();
+							CodeMP.HIGHLIGHTER_MAP.put(event.user, cursor);
 						});
 					} catch(IndexOutOfBoundsException ignored) {} // don't crash over a bad cursor event
 				}
@@ -94,5 +92,14 @@ public class CursorCallback implements Consumer<CursorController> {
 				InteractionUtil.notifyError(project, "Error receiving change", ex);
 			}
 		});
+	}
+
+	public static void disposeOfPreviousHighlighters(String user) {
+		List<RangeHighlighter> previous = CodeMP.HIGHLIGHTER_MAP.remove(user);
+		if(previous != null) {
+			for(RangeHighlighter rh : previous) {
+				rh.dispose();
+			}
+		}
 	}
 }

@@ -3,7 +3,9 @@ package mp.code.ij.vfs;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
+import mp.code.proto.WorkspaceIdentifier;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
@@ -20,9 +22,9 @@ import java.util.Optional;
 @EqualsAndHashCode
 public class CodeMPPath {
 	/**
-	 * The name of the workspace that contains this path.
+	 * The identifier of the workspace that contains this path.
 	 */
-	private final String workspaceName;
+	private final WorkspaceIdentifier workspaceId;
 	/**
 	 * The real path. May never be null, but may be empty.
 	 * It is guaranteed to not have any trailing slashes.
@@ -31,11 +33,11 @@ public class CodeMPPath {
 
 	/**
 	 * Builds a new {@link CodeMPPath} from its separate components.
-	 * @param workspaceName the name of the workspace
+	 * @param workspaceId the id of the workspace
 	 * @param realPath the name of the underlying path
 	 */
-	public CodeMPPath(String workspaceName, String realPath) {
-		this.workspaceName = workspaceName;
+	public CodeMPPath(WorkspaceIdentifier workspaceId, String realPath) {
+		this.workspaceId = workspaceId;
 		if(!realPath.isEmpty()) realPath = stripTrailingSlashes(realPath);
 
 		this.realPath = realPath;
@@ -43,11 +45,11 @@ public class CodeMPPath {
 
 	/**
 	 * Builds a new {@link CodeMPPath} from a unified path containing both the real path and
-	 * the workspace name.
+	 * the workspace name (user/workspace/path).
 	 * @param pathWithWorkspace the unified path
 	 */
 	public CodeMPPath(String pathWithWorkspace) {
-		this.workspaceName = extractWorkspace(pathWithWorkspace);
+		this.workspaceId = extractWorkspace(pathWithWorkspace);
 		this.realPath = extractRealPath(pathWithWorkspace);
 	}
 
@@ -56,7 +58,7 @@ public class CodeMPPath {
 	 * @return the resulting string
 	 */
 	public String join() {
-		return this.workspaceName + '/' + this.realPath;
+		return this.workspaceId.user + '/' + this.workspaceId.workspace + '/' + this.realPath;
 	}
 
 	/**
@@ -76,9 +78,9 @@ public class CodeMPPath {
 	public Optional<CodeMPPath> getParent() {
 		int lastSlash = this.realPath.lastIndexOf('/');
 		if(this.realPath.isEmpty()) return Optional.empty();
-		else if(lastSlash == -1) return Optional.of(new CodeMPPath(this.workspaceName, ""));
+		else if(lastSlash == -1) return Optional.of(new CodeMPPath(this.workspaceId, ""));
 		else return Optional.of(new CodeMPPath(
-			this.workspaceName,
+			this.workspaceId,
 			this.realPath.substring(0, lastSlash)
 		));
 	}
@@ -98,7 +100,7 @@ public class CodeMPPath {
 			for(String c : children)
 				pathBuilder.append('/').append(stripTrailingSlashes(c));
 		return new CodeMPPath(
-			this.workspaceName,
+			this.workspaceId,
 			pathBuilder.toString()
 		);
 	}
@@ -112,14 +114,24 @@ public class CodeMPPath {
 		return Path.of(this.realPath.replace("/", currentSystemSeparator));
 	}
 
-	private static String extractWorkspace(@NotNull String path) {
+	private static @Nullable WorkspaceIdentifier extractWorkspace(@NotNull String path) {
 		int firstSlashPosition = path.indexOf('/');
-		if(firstSlashPosition == -1) return path;
-		return path.substring(0, path.indexOf('/'));
+		if(firstSlashPosition == -1) return null;
+
+		String user = path.substring(0, firstSlashPosition);
+		path = path.substring(firstSlashPosition + 1);
+
+		int secondSlashPosition = path.indexOf('/');
+		if(secondSlashPosition == -1) return null;
+
+		return new WorkspaceIdentifier(
+			user,
+			path.substring(0, secondSlashPosition)
+		);
 	}
 
 	private static String extractRealPath(@NotNull String path) {
-		return path.substring(path.indexOf('/') + 1);
+		return path.substring(path.indexOf('/'));
 	}
 
 	private static String stripTrailingSlashes(@NotNull String s) {

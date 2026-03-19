@@ -26,6 +26,7 @@ import mp.code.ij.settings.CodeMPSettings;
 import mp.code.ij.ui.CodeMPToolPanel;
 import mp.code.ij.util.cb.CursorCallback;
 import mp.code.ij.util.cb.WorkspaceCallback;
+import mp.code.proto.WorkspaceIdentifier;
 import org.apache.commons.lang3.ArrayUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -77,35 +78,35 @@ public class InteractionUtil {
 		notifyInfo(project, "Success", "Disconnected from server!");
 	}
 
-	public static void createWorkspace(@NotNull Project project, @NotNull String workspaceId, @Nullable Runnable after) {
-		ProgressManager.getInstance().run(new Task.Backgroundable(project, String.format("Creating workspace %s...", workspaceId)) {
+	public static void createWorkspace(@NotNull Project project, @NotNull String workspaceName, @Nullable Runnable after) {
+		ProgressManager.getInstance().run(new Task.Backgroundable(project, String.format("Creating workspace %s...", workspaceName)) {
 			@Override
 			public void run(@NotNull ProgressIndicator indicator) {
 				try {
-					CodeMP.getClient("workspace create").createWorkspace(workspaceId);
+					CodeMP.getClient("workspace create").createWorkspace(workspaceName);
 					if(after != null) after.run();
 					refreshToolWindow(project);
 					notifyInfo(
 						project,
 						"Success",
-						String.format("Created workspace %s!", workspaceId)
+						String.format("Created workspace %s!", workspaceName)
 					);
 				} catch(ConnectionException e) {
 					InteractionUtil.notifyError(project, String.format(
 						"Failed to create workspace %s!",
-						workspaceId
+						workspaceName
 					), e);
 				}
 			}
 		});
 	}
 
-	public static void inviteToWorkspace(@NotNull Project project, @NotNull String workspaceId, @NotNull String userName, @Nullable Runnable after) {
+	public static void inviteToWorkspace(@NotNull Project project, @NotNull WorkspaceIdentifier workspaceId, @NotNull String userName, @Nullable Runnable after) {
 		ProgressManager.getInstance().run(new Task.Backgroundable(project, String.format("Inviting %s to workspace %s...", userName, workspaceId)) {
 			@Override
 			public void run(@NotNull ProgressIndicator indicator) {
 				try {
-					CodeMP.getClient("workspace invite").inviteToWorkspace(workspaceId, userName);
+					CodeMP.getClient("workspace invite").inviteToWorkspace(workspaceId.workspace, userName);
 					if(after != null) after.run();
 					refreshToolWindow(project);
 					notifyInfo(
@@ -123,7 +124,7 @@ public class InteractionUtil {
 		});
 	}
 
-	public static void attachWorkspace(@NotNull Project project, @NotNull String workspaceId, @Nullable Runnable after) {
+	public static void attachWorkspace(@NotNull Project project, @NotNull WorkspaceIdentifier workspaceId, @Nullable Runnable after) {
 		ProgressManager.getInstance().run(new Task.Backgroundable(project, String.format("Joining workspace %s...", workspaceId)) {
 			@Override
 			public void run(@NotNull ProgressIndicator indicator) {
@@ -166,21 +167,23 @@ public class InteractionUtil {
 		});
 	}
 
-	public static void deleteWorkspace(@NotNull Project project, @NotNull String workspaceId, @Nullable Runnable after) {
+	public static void deleteWorkspace(@NotNull Project project, @NotNull WorkspaceIdentifier workspaceId, @Nullable Runnable after) {
 		ProgressManager.getInstance().run(new Task.Backgroundable(project, String.format("Deleting workspace %s...", workspaceId)) {
 			@Override
 			public void run(@NotNull ProgressIndicator indicator) {
 				try {
 					Client client = CodeMP.getClient("workspace delete");
-					client.deleteWorkspace(workspaceId);
+					client.deleteWorkspace(workspaceId.workspace);
 
-					Optional<Workspace> ws = client.getWorkspace("workspace leave");
-					if(ws.isPresent() && ws.get().id().equals(workspaceId)) {
+					Workspace ws = CodeMP.getActiveWorkspace();
+					if(ws != null && ws.id().equals(workspaceId)) {
 						CodeMP.leaveWorkspace();
 						MemoryManager.endWorkspaceLifetime(workspaceId);
 					}
 
-					if(after != null) after.run();
+					if(after != null) {
+						after.run();
+					}
 
 					refreshToolWindow(project);
 
@@ -199,7 +202,7 @@ public class InteractionUtil {
 		});
 	}
 
-	public static void leaveWorkspace(@NotNull Project project, @NotNull String workspaceId, @Nullable Runnable after) {
+	public static void leaveWorkspace(@NotNull Project project, @NotNull WorkspaceIdentifier workspaceId, @Nullable Runnable after) {
 		ProgressManager.getInstance().run(new Task.Backgroundable(project, String.format("Leaving workspace %s...", workspaceId)) {
 			@Override
 			public void run(@NotNull ProgressIndicator indicator) {
@@ -216,26 +219,26 @@ public class InteractionUtil {
 		});
 	}
 
-	public static String[] listWorkspaces(Project project, boolean owned, boolean joined) {
+	public static WorkspaceIdentifier[] listWorkspaces(Project project, boolean owned, boolean joined) {
 		try {
 			Client client = CodeMP.getClient("drawActiveWorkspaces");
 
-			String[] ownedWorkspaces;
+			WorkspaceIdentifier[] ownedWorkspaces;
 			if(owned) ownedWorkspaces = client.fetchOwnedWorkspaces();
-			else ownedWorkspaces = new String[0];
+			else ownedWorkspaces = new WorkspaceIdentifier[0];
 
-			String[] joinedWorkspaces;
+			WorkspaceIdentifier[] joinedWorkspaces;
 			if(joined) joinedWorkspaces = client.fetchJoinedWorkspaces();
-			else joinedWorkspaces = new String[0];
+			else joinedWorkspaces = new WorkspaceIdentifier[0];
 
 			return ArrayUtils.addAll(ownedWorkspaces, joinedWorkspaces);
 		} catch(ConnectionRemoteException exception) {
 			notifyError(project, "Failed to list workspaces!", exception);
-			return new String[0];
+			return new WorkspaceIdentifier[0];
 		}
 	}
 
-	public static Optional<BufferController> bufferAttach(Project project, Workspace workspace, String path) {
+	public static BufferController bufferAttach(Project project, Workspace workspace, String path) {
 		try {
 			BufferController controller = workspace.attachBuffer(path);
 			MemoryManager.startBufferLifetime(workspace.id(), path);
@@ -244,17 +247,17 @@ public class InteractionUtil {
 				path,
 				workspace.id())
 			);
-			return Optional.of(controller);
+			return controller;
 		} catch(ConnectionException e) {
 			notifyError(project, "Failed to attach to buffer!", e);
-			return Optional.empty();
+			return null;
 		}
 	}
 
-	public static void createBuffer(Project project, String path) {
+	public static void createBuffer(Project project, String path, boolean ephemeral) {
 		try {
 			Workspace workspace = CodeMP.getActiveWorkspace();
-			workspace.createBuffer(path);
+			workspace.createBuffer(path, ephemeral);
 			refreshToolWindow(project);
 		} catch(ConnectionRemoteException e) {
 			notifyError(project, "Failed to create a buffer!", e);

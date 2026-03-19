@@ -8,31 +8,39 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.ui.Messages;
 import mp.code.BufferController;
+import mp.code.Workspace;
 import mp.code.exceptions.ControllerException;
 import mp.code.ij.CodeMP;
 import mp.code.ij.util.FileUtil;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Optional;
-
 public class BufferSyncAction extends AnAction {
 	@Override
 	public void actionPerformed(@NotNull AnActionEvent e) {
 		// TODO if current buffer is managed, sync that instead of making user choose
 
-		String[] activeBuffers = CodeMP.getActiveWorkspace().activeBuffers();
+		Workspace ws = CodeMP.getActiveWorkspace();
+		if(ws == null) {
+			Messages.showErrorDialog(
+				"Not currently in a workspace!",
+				"CodeMP Buffer Sync"
+			);
+			return;
+		}
+
+		String[] activeBuffers = ws.activeBuffers();
 		int choice = Messages.showChooseDialog(
 			"Sync which buffer?",
-			"CodeMP Buffer Detach",
+			"CodeMP Buffer Sync",
 			activeBuffers,
 			"",
 			Messages.getQuestionIcon()
 		);
 		String path = activeBuffers[choice];
 
-		Optional<BufferController> controller = CodeMP.getActiveWorkspace().getBuffer(path);
-		if (controller.isEmpty()) {
+		BufferController controller = ws.getBuffer(path);
+		if (controller == null) {
 			Messages.showErrorDialog("No active controller for path " + path, "CodeMP Buffer Sync");
 			return;
 		}
@@ -45,7 +53,7 @@ public class BufferSyncAction extends AnAction {
 
 		String remoteContent;
 		try {
-			remoteContent = controller.get().getContent();
+			remoteContent = controller.content();
 		} catch (ControllerException ex) {
 			Messages.showErrorDialog("Controller failed returning path: " + path, "CodeMP Buffer Sync");
 			return;

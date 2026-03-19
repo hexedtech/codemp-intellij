@@ -11,7 +11,8 @@ import com.intellij.ui.components.JBList;
 import com.intellij.ui.treeStructure.Tree;
 import mp.code.BufferController;
 import mp.code.Workspace;
-import mp.code.data.TextChange;
+import mp.code.ij.util.DisplayUtil;
+import mp.code.proto.TextChange;
 import mp.code.exceptions.ControllerException;
 import mp.code.ij.CodeMP;
 import mp.code.ij.util.FileUtil;
@@ -26,7 +27,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.MouseEvent;
 import java.io.IOException;
 import java.util.Objects;
-import java.util.Optional;
 
 public class CodeMPToolPanel extends JPanel {
 	public CodeMPToolPanel(Project project) {
@@ -52,7 +52,7 @@ public class CodeMPToolPanel extends JPanel {
 			}
 			case CONNECTED -> {
 				this.setLayout(new GridLayout(0, 1));
-				JTree tree = drawTree("all workspaces", InteractionUtil.listWorkspaces(project, true, true));
+				JTree tree = drawTree("all workspaces", DisplayUtil.displayableWorkspaceNames(InteractionUtil.listWorkspaces(project, true, true)));
 				tree.addMouseListener(new SimpleMouseListener() {
 					@Override
 					public void mouseClicked(MouseEvent e) {
@@ -62,7 +62,7 @@ public class CodeMPToolPanel extends JPanel {
 						String workspaceName = path.getLastPathComponent().toString();
 						InteractionUtil.attachWorkspace(
 							project,
-							workspaceName,
+							Objects.requireNonNull(DisplayUtil.identifierFromDisplayableName(workspaceName)),
 							() -> CodeMPToolPanel.this.redraw(project)
 						);
 					}
@@ -93,10 +93,10 @@ public class CodeMPToolPanel extends JPanel {
 							return;
 						}
 
-						InteractionUtil.createBuffer(proj, path);
+						InteractionUtil.createBuffer(proj, path, false); // TODO: handle ephemeral
 						CodeMPToolPanel.this.redraw(project);
-						Optional<BufferController> controller = InteractionUtil.bufferAttach(proj, CodeMP.getActiveWorkspace(), path);
-						if(controller.isEmpty()) {
+						BufferController controller = InteractionUtil.bufferAttach(proj, CodeMP.getActiveWorkspace(), path);
+						if(controller == null) {
 							Messages.showErrorDialog(
 								"An unknown error has occurred!",
 								"CodeMP Buffer Share"
@@ -106,19 +106,19 @@ public class CodeMPToolPanel extends JPanel {
 
 						try {
 							Editor ed = ((TextEditor) currentEditor).getEditor();
-							controller.get().send(new TextChange(
+							controller.send(new TextChange(
 								0,
 								0,
 								ed.getDocument().getText()
 							));
 							ApplicationManager.getApplication().runWriteAction(() -> {
 								try {
-									FileUtil.getAndRegisterBufferEquivalent(this, proj, controller.get());
+									FileUtil.getAndRegisterBufferEquivalent(this, proj, controller);
 								} catch(ControllerException | IOException ex) {
 									throw new RuntimeException(ex);
 								} catch(UnsupportedOperationException ignored) {}
 							});
-							controller.get().callback(buf -> new BufferCallback(proj).accept(buf));
+							controller.callback(buf -> new BufferCallback(proj).accept(buf));
 						} catch(ControllerException ex) {
 							throw new RuntimeException(ex);
 						}
@@ -126,18 +126,21 @@ public class CodeMPToolPanel extends JPanel {
 				}), BorderLayout.NORTH);
 
 				Workspace ws = CodeMP.getActiveWorkspace();
-				JTree tree = drawTree(ws.id(), ws.searchBuffers(Optional.empty()));
+				JTree tree = drawTree(DisplayUtil.displayableWorkspaceName(ws.id()), ws.searchBuffers(null));
 				tree.addMouseListener(new SimpleMouseListener() {
 					@Override
 					public void mouseClicked(MouseEvent e) {
 						if(e.getClickCount() < 2) return;
 						TreePath path = tree.getPathForLocation(e.getX(), e.getY());
 						if(path == null) return;
-						InteractionUtil.bufferAttach(
+
+						BufferController controller = InteractionUtil.bufferAttach(
 							project,
 							CodeMP.getActiveWorkspace(),
 							path.getLastPathComponent().toString()
-						).ifPresent(controller -> {
+						);
+
+						if(controller != null) {
 							try {
 								Thread.sleep(1000); // TODO: this sucks
 							} catch(InterruptedException ignored) {}
@@ -149,7 +152,7 @@ public class CodeMPToolPanel extends JPanel {
 								} catch(UnsupportedOperationException ignored) {}
 								});
 							controller.callback(buf -> new BufferCallback(project).accept(buf));
-						});
+						}
 					}
 				});
 
@@ -161,8 +164,8 @@ public class CodeMPToolPanel extends JPanel {
 		}
 	}
 
-	private JTree drawTree(String workspace, String[] contents) {
-		DefaultMutableTreeNode root = new DefaultMutableTreeNode(workspace);
+	private static JTree drawTree(String parent, String[] contents) {
+		DefaultMutableTreeNode root = new DefaultMutableTreeNode(parent);
 		for(String content : contents) {
 			root.add(new DefaultMutableTreeNode(content));
 		}
